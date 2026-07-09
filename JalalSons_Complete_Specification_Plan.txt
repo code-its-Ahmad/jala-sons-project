@@ -1,0 +1,2622 @@
+
+================================================================================
+  JALAL SONS SMART OPERATIONS PLATFORM
+  COMPLETE PROFESSIONAL SPECIFICATION PLAN v1.0
+  Advanced AI-Powered Grocery & Restaurant Delivery System
+================================================================================
+
+TABLE OF CONTENTS
+--------------------------------------------------------------------------------
+ 1.  Executive Summary
+ 2.  Problem Statement (Detailed)
+ 3.  Complete Tech Stack & Rationale
+ 4.  System Architecture Overview
+ 5.  Supabase Database Schema (All 17 Tables, Complete)
+ 6.  AI/ML Pipeline Specification
+ 7.  Feature Specifications (10 Core Features)
+ 8.  FastAPI Endpoint Catalog (Complete)
+ 9.  User-Side Complete Flow
+10.  Admin-Side Complete Flow
+11.  Rider-Side Complete Flow
+12.  Real-Time System Specification (All Channels)
+13.  Maps & Geolocation Specification
+14.  WebSocket Communication Specification
+15.  Security & Authentication Architecture
+16.  UI/UX Specification (Professional Level, All Pages)
+17.  Free API Integration Details
+18.  Data Ingestion & Scraping Pipeline (Apify)
+19.  Vector Search & Semantic Engine (pgvector)
+20.  Notification & Alert System
+21.  Deployment Architecture (All Free Tier)
+22.  Testing Strategy
+23.  Environment Variables Reference
+24.  Supabase Realtime Setup Checklist
+25.  pgvector Index Configuration
+26.  Apify Webhook Configuration
+27.  Complete Solution Summary & Roadmap
+
+================================================================================
+SECTION 1: EXECUTIVE SUMMARY
+================================================================================
+
+Jalal Sons Smart Operations Platform is a full-stack, AI-powered retail and food
+delivery system designed to eliminate the operational friction experienced by
+traditional grocery and restaurant chains. The platform integrates predictive
+machine learning, autonomous multi-agent AI, real-time geolocation tracking,
+and vector-based semantic search into a unified, cost-effective solution built
+entirely on free-tier and open-source technologies.
+
+The system serves three primary user roles:
+
+  CUSTOMER (End-User)
+    Places orders, tracks delivery live on a map, receives AI-personalized
+    substitution offers when items run out, and gets real-time status updates.
+
+  RIDER (Delivery Agent)
+    Receives auto-assigned orders from the AI Dispatcher, shares live GPS
+    coordinates, follows turn-by-turn navigation, and updates delivery status.
+
+  ADMIN (Operations Manager)
+    Monitors live order pipelines, manages AI-predicted inventory alerts,
+    oversees the LangChain Dispatcher Agent, and configures AI parameters.
+
+Core Technology Pillars:
+  - FastAPI (async Python backend)
+  - LangChain (multi-agent AI orchestration)
+  - Gemini 2.5 Flash (LLM + embeddings)
+  - TensorFlow / Keras (demand forecasting LSTM)
+  - Supabase (ALL data: PostgreSQL + Auth + Realtime + pgvector + Storage)
+  - Apify (data ingestion from restaurant & grocery sources)
+  - Leaflet + OSM + Nominatim + OpenRouteService + GraphHopper (all-free maps)
+  - Next.js 14 + Tailwind CSS (frontend)
+
+The entire data layer is consolidated into a single Supabase project. No
+separate Redis, Pinecone, Firebase, or Auth0 is required.
+
+================================================================================
+SECTION 2: PROBLEM STATEMENT (DETAILED)
+================================================================================
+
+2.1  INVENTORY DISCONNECTION
+     Traditional POS systems do not synchronize with digital storefronts in
+     real-time. A product shown as "Available" online may already be sold out
+     in the physical store. Consequences:
+       - Order cancellations at the final checkout stage
+       - Manual staff intervention required
+       - Customer trust erosion and churn
+       - Direct revenue leakage per cancelled order
+
+2.2  NO INTELLIGENT SUBSTITUTION LOGIC
+     When a checkout item is out of stock, current systems cancel or require a
+     phone call to support. There is no automated, context-aware fallback that:
+       - Understands the nutritional or culinary context of the missing item
+       - Suggests semantically relevant alternatives
+       - Completes the sale with minimal disruption and customer effort
+
+2.3  MANUAL RIDER DISPATCH
+     Assigning delivery riders manually is slow, inconsistent, and unscalable.
+     During peak hours, dispatchers become the primary bottleneck. Factors like
+     proximity, current order load, and vehicle type are inconsistently applied,
+     resulting in:
+       - Delayed order pickups
+       - Uneven rider workload distribution
+       - Longer delivery times and frustrated customers
+
+2.4  STATIC ROUTE PLANNING
+     Fixed delivery routes ignore real-time conditions. The result is:
+       - Unnecessarily long delivery times
+       - Higher fuel costs per delivery
+       - No ETA feedback to the customer until the door
+
+2.5  NO PREDICTIVE CAPABILITY
+     Operations react to stockouts rather than preventing them. Without demand
+     forecasting, procurement decisions are reactive and often inaccurate, leading
+     to either waste (overstock) or missed sales (stockout).
+
+2.6  POOR CUSTOMER EXPERIENCE ON TRACKING
+     Current implementations offer no live GPS tracking. Customers receive only
+     a static "Your order is on its way" message, leading to inbound support
+     calls and reduced satisfaction scores.
+
+================================================================================
+SECTION 3: COMPLETE TECH STACK & RATIONALE
+================================================================================
+
+3.1  BACKEND FRAMEWORK
+     Language    : Python 3.11+
+     Framework   : FastAPI 0.110+
+     Rationale   : Async-first architecture, OpenAPI auto-documentation,
+                   native WebSocket support, high concurrency under uvicorn,
+                   seamless integration with all Python ML/AI libraries.
+
+3.2  AI AGENT ORCHESTRATION
+     Framework   : LangChain 0.2+
+     Rationale   : Enables multi-agent tool orchestration, chain-of-thought
+                   reasoning, structured agent memory, and tool-use pipelines.
+                   Fully open-source, zero licensing cost.
+
+3.3  CORE LLM / GENERATIVE AI
+     Provider    : Google Gemini API
+     Model       : gemini-2.5-flash (completions)
+                   text-embedding-004 (768-dimension embeddings)
+     Rationale   : Free tier with 1M tokens/day quota. Fastest Gemini model.
+                   Superior at semantic embedding, context-aware recommendation,
+                   and natural language generation for user-facing messages.
+
+3.4  MACHINE LEARNING
+     Library     : TensorFlow 2.16+ with Keras
+     Model Type  : LSTM (Long Short-Term Memory) Neural Network
+     Rationale   : Open-source. Purpose-built for time-series demand forecasting.
+                   LSTM excels at capturing seasonal and weekly sales patterns.
+
+3.5  PRIMARY DATABASE, AUTH, REALTIME, VECTOR, STORAGE
+     Platform    : Supabase (Free Tier: 500MB DB, 50k MAU, 5GB bandwidth)
+     Services    :
+       PostgreSQL  : All relational data (17 tables defined in Section 5)
+       Auth        : JWT-based authentication (email/password + Google OAuth)
+       Realtime    : WebSocket change data capture (CDC) for live UI updates
+       pgvector    : 768-dim embedding vectors for semantic product search
+       Storage     : Product images, rider avatars, ML model artifacts
+     Rationale   : Single platform replaces Redis, Pinecone, Firebase, Auth0.
+                   All data in one place; RLS-enforced security; zero extra cost.
+
+3.6  DATA INGESTION
+     Platform    : Apify (Free Tier: $5/month credit)
+     Scrapers    :
+       Restaurant : apify.com/its_raghav/restaurant-menu-scraper
+       Grocery    : apify.com/piotrv1001/instacart-scraper
+     Rationale   : Structured menu/product data without custom scraper
+                   maintenance. Outputs clean JSON via webhook to FastAPI.
+
+3.7  MAPPING & GEOLOCATION (ALL FREE)
+     Map Rendering      : Leaflet.js + OpenStreetMap tile server
+     User Location      : Browser Geolocation API (navigator.geolocation)
+     Place Search       : Nominatim (OpenStreetMap) — no key required
+     Reverse Geocoding  : Nominatim
+     Route Calculation  : OpenRouteService (Free: 2,000 req/day)
+     Alternative Routes : GraphHopper (Free: 500 req/day)
+     Distance Matrix    : OpenRouteService
+     Turn-by-Turn Nav   : GraphHopper Directions API
+
+3.8  FRONTEND
+     Framework          : Next.js 14 (React, App Router)
+     Styling            : Tailwind CSS + ShadCN UI component library
+     State Management   : Zustand (lightweight, no boilerplate)
+     Realtime Client    : Supabase JS Client (@supabase/supabase-js)
+     Map Client         : Leaflet.js via react-leaflet wrapper
+     Charts & Analytics : Recharts (admin dashboard — free, React-native)
+     Animations         : Framer Motion (page transitions, modals, map markers)
+
+3.9  BACKGROUND TASKS & SCHEDULING
+     Async Workers      : FastAPI BackgroundTasks (inline with request lifecycle)
+     Scheduled Jobs     : APScheduler (Python) for:
+                            - ML model retraining (weekly, Sunday 02:00 AM)
+                            - Inventory prediction scan (every 30 minutes)
+                            - Rider location cleanup (daily, archive >30 days)
+
+3.10 EMAIL NOTIFICATIONS
+     Service            : Resend API (Free: 3,000 emails/month)
+     Templates          : HTML email for order confirmation, delivery receipt,
+                          password reset
+
+3.11 DEPLOYMENT (ALL FREE TIER)
+     Backend            : Railway.app or Render.com (free tier Docker container)
+     Frontend           : Vercel (free tier, optimized for Next.js)
+     ML Models          : Stored in Supabase Storage, loaded at server startup
+
+================================================================================
+SECTION 4: SYSTEM ARCHITECTURE OVERVIEW
+================================================================================
+
+4.1  HIGH-LEVEL COMPONENT DIAGRAM
+
+  ┌─────────────────────────────────────────────────────────────────────┐
+  │                    CLIENT LAYER (Browser / PWA)                     │
+  │  ┌─────────────────┐  ┌──────────────────┐  ┌───────────────────┐  │
+  │  │  Customer App   │  │   Rider App      │  │   Admin Dashboard │  │
+  │  │  (Next.js 14)   │  │   (Next.js 14)   │  │   (Next.js 14)    │  │
+  │  └────────┬────────┘  └────────┬─────────┘  └────────┬──────────┘  │
+  └───────────┼─────────────────────┼─────────────────────┼────────────┘
+              │                     │                     │
+              │    REST API / WebSocket / Supabase Realtime
+              │                     │                     │
+  ┌───────────▼─────────────────────▼─────────────────────▼────────────┐
+  │                   BACKEND LAYER (Railway/Render)                    │
+  │                                                                     │
+  │   ┌──────────────────────────────────────────────────────────────┐  │
+  │   │                FastAPI Application                           │  │
+  │   │  ┌──────────────┐  ┌───────────────┐  ┌──────────────────┐  │  │
+  │   │  │  REST Router │  │  WebSocket    │  │  APScheduler     │  │  │
+  │   │  │  (All APIs)  │  │  Handler      │  │  (Cron Jobs)     │  │  │
+  │   │  └──────┬───────┘  └───────┬───────┘  └───────┬──────────┘  │  │
+  │   │         └──────────────────┼──────────────────┘             │  │
+  │   │                            │                                 │  │
+  │   │  ┌─────────────────────────▼───────────────────────────┐    │  │
+  │   │  │           LangChain Agent Layer                      │    │  │
+  │   │  │  ┌──────────────┐ ┌────────────────┐ ┌───────────┐  │    │  │
+  │   │  │  │  Dispatcher  │ │  Substitution  │ │  Restock  │  │    │  │
+  │   │  │  │  Agent       │ │  Engine Agent  │ │  Alert    │  │    │  │
+  │   │  │  └──────────────┘ └────────────────┘ └───────────┘  │    │  │
+  │   │  └──────────────────────────────────────────────────────┘    │  │
+  │   │                                                              │  │
+  │   │  ┌────────────────────┐    ┌────────────────────────────┐   │  │
+  │   │  │  TensorFlow        │    │  Gemini API Client         │   │  │
+  │   │  │  LSTM Model        │    │  (Flash + Embeddings)      │   │  │
+  │   │  └────────────────────┘    └────────────────────────────┘   │  │
+  │   └──────────────────────────────────────────────────────────────┘  │
+  └─────────────────────────────┬───────────────────────────────────────┘
+                                │
+  ┌─────────────────────────────▼───────────────────────────────────────┐
+  │                   SUPABASE LAYER (Single Platform)                   │
+  │                                                                     │
+  │  ┌────────────────┐  ┌──────────────────────────────────────────┐  │
+  │  │ PostgreSQL DB  │  │ pgvector Extension                       │  │
+  │  │ (17 Tables)    │  │ (products.embedding VECTOR(768))         │  │
+  │  └────────────────┘  └──────────────────────────────────────────┘  │
+  │  ┌────────────────┐  ┌──────────────────┐  ┌────────────────────┐  │
+  │  │ Supabase Auth  │  │ Supabase Realtime│  │ Supabase Storage   │  │
+  │  │ (JWT + OAuth)  │  │ (CDC Listeners)  │  │ (Images + ML Files)│  │
+  │  └────────────────┘  └──────────────────┘  └────────────────────┘  │
+  └─────────────────────────────────────────────────────────────────────┘
+                                │
+  ┌─────────────────────────────▼───────────────────────────────────────┐
+  │                   EXTERNAL FREE SERVICES                            │
+  │  Apify Scrapers │ Google Gemini │ OpenRouteService │ GraphHopper    │
+  │  Nominatim OSM  │ Resend Email  │ Leaflet/OSM Tiles                │
+  └─────────────────────────────────────────────────────────────────────┘
+
+4.2  DATA FLOW SUMMARY
+
+  Apify ──────────────► FastAPI Ingest ──► Supabase Products + pgvector
+  User Checkout ───────► FastAPI ──────────► LangChain ──► Gemini ──► Supabase
+  Rider GPS ───────────► FastAPI WebSocket ─► Supabase ──► Realtime ──► User Map
+  TensorFlow Model ────► Demand Forecast ──► Supabase predictions ──► Admin UI
+  Supabase CDC ────────► Realtime ─────────► All Clients (auto-subscribed channels)
+
+4.3  COMMUNICATION PROTOCOLS BY USE CASE
+  REST HTTP    : CRUD operations, auth, search, order management, admin controls
+  WebSocket    : Continuous rider GPS streaming (FastAPI native WS handler)
+  Supabase CDC : Database-level change propagation to all frontend clients
+  SSE          : Optional fallback for admin live alerts
+
+================================================================================
+SECTION 5: SUPABASE DATABASE SCHEMA (COMPLETE — ALL 17 TABLES)
+================================================================================
+
+All tables reside in Supabase PostgreSQL with Row-Level Security (RLS) enabled.
+The service_role key (used by FastAPI backend) bypasses RLS.
+The anon/authenticated key (used by frontend) is governed by RLS policies.
+
+────────────────────────────────────────────────────────────────────────────────
+TABLE 1: users
+--------------------------------------------------------------------------------
+  id               UUID        PRIMARY KEY DEFAULT gen_random_uuid()
+  email            TEXT        UNIQUE NOT NULL
+  full_name        TEXT
+  phone            TEXT
+  role             TEXT        CHECK (role IN ('customer','rider','admin'))
+                               DEFAULT 'customer'
+  avatar_url       TEXT
+  default_address  TEXT
+  default_lat      FLOAT8
+  default_lng      FLOAT8
+  created_at       TIMESTAMPTZ DEFAULT now()
+  updated_at       TIMESTAMPTZ DEFAULT now()
+
+  RLS POLICY: Users can SELECT and UPDATE only their own row (auth.uid() = id).
+              Admins can SELECT all rows.
+
+────────────────────────────────────────────────────────────────────────────────
+TABLE 2: stores
+--------------------------------------------------------------------------------
+  id               UUID        PRIMARY KEY DEFAULT gen_random_uuid()
+  name             TEXT        NOT NULL   -- e.g. "Jalal Sons - Gulberg"
+  type             TEXT        CHECK (type IN ('grocery','restaurant','hybrid'))
+  address          TEXT
+  latitude         FLOAT8
+  longitude        FLOAT8
+  phone            TEXT
+  open_time        TIME
+  close_time       TIME
+  is_active        BOOLEAN     DEFAULT true
+  created_at       TIMESTAMPTZ DEFAULT now()
+
+  RLS POLICY: All authenticated users can SELECT active stores.
+              Only admin role can INSERT/UPDATE/DELETE.
+
+────────────────────────────────────────────────────────────────────────────────
+TABLE 3: categories
+--------------------------------------------------------------------------------
+  id               UUID        PRIMARY KEY DEFAULT gen_random_uuid()
+  store_id         UUID        REFERENCES stores(id) ON DELETE CASCADE
+  name             TEXT        NOT NULL   -- e.g. "Vegetables", "Burgers"
+  slug             TEXT        UNIQUE
+  parent_id        UUID        REFERENCES categories(id)  -- subcategory support
+  type             TEXT        CHECK (type IN ('grocery','restaurant'))
+  icon_url         TEXT
+  sort_order       INTEGER     DEFAULT 0
+  is_active        BOOLEAN     DEFAULT true
+
+  RLS POLICY: All authenticated users can SELECT. Admin only for writes.
+
+────────────────────────────────────────────────────────────────────────────────
+TABLE 4: products
+--------------------------------------------------------------------------------
+  id               UUID        PRIMARY KEY DEFAULT gen_random_uuid()
+  store_id         UUID        REFERENCES stores(id) ON DELETE CASCADE
+  category_id      UUID        REFERENCES categories(id)
+  name             TEXT        NOT NULL
+  description      TEXT
+  price            NUMERIC(10,2) NOT NULL
+  unit             TEXT                   -- e.g. "kg", "piece", "litre"
+  image_url        TEXT
+  is_active        BOOLEAN     DEFAULT true
+  tags             TEXT[]                 -- ['spicy','vegan','gluten-free']
+  nutritional_info JSONB                  -- {calories, protein, carbs, fat, ...}
+  embedding        VECTOR(768)            -- pgvector column (Gemini embedding)
+  source_url       TEXT                   -- Apify origin URL
+  apify_item_id    TEXT                   -- Apify deduplication key
+  created_at       TIMESTAMPTZ DEFAULT now()
+  updated_at       TIMESTAMPTZ DEFAULT now()
+
+  INDEXES:
+    - products(store_id)
+    - products(category_id)
+    - products(embedding) USING ivfflat (vector_cosine_ops) WITH (lists=100)
+    - products(is_active, store_id)
+
+  RLS POLICY: All authenticated users can SELECT active products.
+              Admin and service_role for writes.
+
+────────────────────────────────────────────────────────────────────────────────
+TABLE 5: inventory
+--------------------------------------------------------------------------------
+  id                   UUID        PRIMARY KEY DEFAULT gen_random_uuid()
+  product_id           UUID        REFERENCES products(id) ON DELETE CASCADE UNIQUE
+  quantity             INTEGER     NOT NULL DEFAULT 0
+  reserved_quantity    INTEGER     DEFAULT 0  -- soft-hold for active carts
+  unit                 TEXT
+  low_stock_threshold  INTEGER     DEFAULT 10
+  critical_threshold   INTEGER     DEFAULT 3
+  last_restocked_at    TIMESTAMPTZ
+  updated_at           TIMESTAMPTZ DEFAULT now()
+
+  DERIVED FIELD (computed in queries):
+    available_quantity = quantity - reserved_quantity
+
+  RLS POLICY: Customers cannot directly SELECT inventory (accessed via API only).
+              Riders and admins can SELECT. Service_role handles all writes.
+
+────────────────────────────────────────────────────────────────────────────────
+TABLE 6: inventory_predictions
+--------------------------------------------------------------------------------
+  id                   UUID        PRIMARY KEY DEFAULT gen_random_uuid()
+  product_id           UUID        REFERENCES products(id) ON DELETE CASCADE
+  predicted_demand_24h FLOAT8
+  predicted_demand_48h FLOAT8
+  predicted_demand_7d  FLOAT8
+  confidence_score     FLOAT8      -- 0.0 to 1.0
+  predicted_stockout_at TIMESTAMPTZ -- when current stock will run out at predicted rate
+  model_version        TEXT
+  generated_at         TIMESTAMPTZ DEFAULT now()
+
+  INDEXES: inventory_predictions(product_id), inventory_predictions(predicted_stockout_at)
+  RLS POLICY: Admin role only for SELECT. Service_role for writes.
+
+────────────────────────────────────────────────────────────────────────────────
+TABLE 7: orders
+--------------------------------------------------------------------------------
+  id               UUID        PRIMARY KEY DEFAULT gen_random_uuid()
+  user_id          UUID        REFERENCES users(id)
+  store_id         UUID        REFERENCES stores(id)
+  rider_id         UUID        REFERENCES riders(id)   -- nullable until assigned
+  status           TEXT        CHECK (status IN (
+                                 'PENDING', 'CONFIRMED', 'PREPARING',
+                                 'READY_FOR_PICKUP', 'RIDER_ASSIGNED',
+                                 'OUT_FOR_DELIVERY', 'DELIVERED', 'CANCELLED'
+                               )) DEFAULT 'PENDING'
+  total_amount     NUMERIC(10,2)
+  delivery_address TEXT
+  delivery_lat     FLOAT8
+  delivery_lng     FLOAT8
+  delivery_notes   TEXT
+  estimated_eta    INTEGER     -- minutes (updated by ETA engine)
+  payment_method   TEXT        CHECK (payment_method IN ('cod','card','wallet'))
+  payment_status   TEXT        CHECK (payment_status IN ('pending','paid','refunded'))
+                               DEFAULT 'pending'
+  cancellation_reason TEXT
+  created_at       TIMESTAMPTZ DEFAULT now()
+  updated_at       TIMESTAMPTZ DEFAULT now()
+
+  INDEXES: orders(user_id), orders(rider_id), orders(status), orders(store_id)
+  REALTIME: ENABLED on this table (CDC-based broadcasts to order channels)
+
+  RLS POLICY:
+    Customers: SELECT/UPDATE own orders (where user_id = auth.uid())
+    Riders: SELECT orders where rider_id = their rider profile's id
+    Admins: Full access
+    All status updates go through FastAPI backend (service_role)
+
+────────────────────────────────────────────────────────────────────────────────
+TABLE 8: order_items
+--------------------------------------------------------------------------------
+  id                    UUID        PRIMARY KEY DEFAULT gen_random_uuid()
+  order_id              UUID        REFERENCES orders(id) ON DELETE CASCADE
+  product_id            UUID        REFERENCES products(id)
+  quantity              INTEGER     NOT NULL
+  unit_price            NUMERIC(10,2)
+  is_substituted        BOOLEAN     DEFAULT false
+  substituted_for_id    UUID        REFERENCES products(id)  -- original item if substituted
+  substitution_discount NUMERIC(5,2) DEFAULT 0.00            -- % discount applied
+
+  INDEXES: order_items(order_id), order_items(product_id)
+  RLS POLICY: Follows parent order RLS (customers see own order items).
+
+────────────────────────────────────────────────────────────────────────────────
+TABLE 9: substitution_offers
+--------------------------------------------------------------------------------
+  id                   UUID        PRIMARY KEY DEFAULT gen_random_uuid()
+  order_id             UUID        REFERENCES orders(id) ON DELETE CASCADE
+  original_product_id  UUID        REFERENCES products(id)
+  suggested_product_id UUID        REFERENCES products(id)
+  similarity_score     FLOAT8      -- cosine similarity from pgvector query
+  rank                 INTEGER     -- 1 = best match, 2 = second best, 3 = third
+  discount_percentage  NUMERIC(5,2)
+  ai_reasoning         TEXT        -- Gemini natural language explanation
+  user_response        TEXT        CHECK (user_response IN ('pending','accepted','rejected'))
+                                   DEFAULT 'pending'
+  responded_at         TIMESTAMPTZ
+  created_at           TIMESTAMPTZ DEFAULT now()
+
+  REALTIME: ENABLED (customer subscribes to this table for their order)
+  RLS POLICY: Customers see offers for their own orders. Admin sees all.
+
+────────────────────────────────────────────────────────────────────────────────
+TABLE 10: riders
+--------------------------------------------------------------------------------
+  id                   UUID        PRIMARY KEY DEFAULT gen_random_uuid()
+  user_id              UUID        REFERENCES users(id) ON DELETE CASCADE UNIQUE
+  vehicle_type         TEXT        CHECK (vehicle_type IN ('motorcycle','bicycle','car'))
+  is_available         BOOLEAN     DEFAULT true
+  is_online            BOOLEAN     DEFAULT false
+  current_latitude     FLOAT8
+  current_longitude    FLOAT8
+  active_order_count   INTEGER     DEFAULT 0
+  avg_delivery_rating  FLOAT4      DEFAULT 0
+  total_deliveries     INTEGER     DEFAULT 0
+  created_at           TIMESTAMPTZ DEFAULT now()
+  updated_at           TIMESTAMPTZ DEFAULT now()
+
+  INDEXES: riders(is_online, is_available), riders(user_id)
+  REALTIME: ENABLED (admin dashboard subscribes for live rider map)
+  RLS POLICY: Rider can SELECT/UPDATE own row. Admin can SELECT all. Service_role full access.
+
+────────────────────────────────────────────────────────────────────────────────
+TABLE 11: rider_locations   (GPS Trajectory Log)
+--------------------------------------------------------------------------------
+  id               UUID        PRIMARY KEY DEFAULT gen_random_uuid()
+  rider_id         UUID        REFERENCES riders(id) ON DELETE CASCADE
+  order_id         UUID        REFERENCES orders(id)  -- nullable (off-duty location)
+  latitude         FLOAT8      NOT NULL
+  longitude        FLOAT8      NOT NULL
+  speed_kmh        FLOAT4
+  heading_degrees  FLOAT4
+  recorded_at      TIMESTAMPTZ DEFAULT now()
+
+  INDEXES: rider_locations(rider_id, recorded_at DESC), rider_locations(order_id)
+  REALTIME: ENABLED (user tracking page subscribes to their active order's rider)
+  RETENTION: Records older than 30 days purged nightly via APScheduler cleanup job
+  RLS POLICY: Service_role writes. Admin can SELECT all. Riders can SELECT own rows.
+              Customers can SELECT only rows linked to their active order.
+
+────────────────────────────────────────────────────────────────────────────────
+TABLE 12: delivery_eta_history   (ML Training Data)
+--------------------------------------------------------------------------------
+  id               UUID        PRIMARY KEY DEFAULT gen_random_uuid()
+  rider_id         UUID        REFERENCES riders(id)
+  order_id         UUID        REFERENCES orders(id)
+  distance_km      FLOAT8
+  time_of_day      INTEGER     -- hour 0–23
+  day_of_week      INTEGER     -- 0=Monday, 6=Sunday
+  weather_code     INTEGER     -- 0=clear, 1=cloudy, 2=rain, 3=storm (optional)
+  actual_duration  INTEGER     -- actual minutes taken (ground truth)
+  created_at       TIMESTAMPTZ DEFAULT now()
+
+  INDEXES: delivery_eta_history(rider_id), delivery_eta_history(time_of_day, day_of_week)
+  RLS POLICY: Service_role only for writes. Admin can SELECT.
+
+────────────────────────────────────────────────────────────────────────────────
+TABLE 13: sales_history   (ML Training Source for Demand Forecasting)
+--------------------------------------------------------------------------------
+  id               UUID        PRIMARY KEY DEFAULT gen_random_uuid()
+  product_id       UUID        REFERENCES products(id) ON DELETE CASCADE
+  store_id         UUID        REFERENCES stores(id)
+  quantity         INTEGER
+  sale_date        DATE
+  time_slot        INTEGER     -- hour of day 0–23
+  created_at       TIMESTAMPTZ DEFAULT now()
+
+  INDEXES: sales_history(product_id, sale_date), sales_history(store_id, sale_date)
+  POPULATION: Auto-inserted from order_items on each DELIVERED order status change.
+  RLS POLICY: Admin read only. Service_role writes.
+
+────────────────────────────────────────────────────────────────────────────────
+TABLE 14: agent_logs
+--------------------------------------------------------------------------------
+  id               UUID        PRIMARY KEY DEFAULT gen_random_uuid()
+  agent_type       TEXT        -- 'dispatcher', 'substitution', 'restock_alert', 'eta'
+  trigger_event    TEXT        -- e.g., "order_id=abc ready_for_pickup"
+  input_data       JSONB
+  output_data      JSONB
+  status           TEXT        CHECK (status IN ('success','failed','partial'))
+  duration_ms      INTEGER
+  created_at       TIMESTAMPTZ DEFAULT now()
+
+  INDEXES: agent_logs(agent_type, created_at DESC)
+  REALTIME: ENABLED (admin dispatcher panel streams this table)
+  RLS POLICY: Admin role only for SELECT. Service_role for writes.
+
+────────────────────────────────────────────────────────────────────────────────
+TABLE 15: notifications
+--------------------------------------------------------------------------------
+  id               UUID        PRIMARY KEY DEFAULT gen_random_uuid()
+  user_id          UUID        REFERENCES users(id) ON DELETE CASCADE
+  title            TEXT
+  body             TEXT
+  type             TEXT        CHECK (type IN (
+                                 'order_update','substitution_offer','low_stock',
+                                 'rider_assigned','delivered','system'
+                               ))
+  is_read          BOOLEAN     DEFAULT false
+  metadata         JSONB       -- {order_id, product_id, rider_id, etc.}
+  created_at       TIMESTAMPTZ DEFAULT now()
+
+  INDEXES: notifications(user_id, is_read), notifications(user_id, created_at DESC)
+  REALTIME: ENABLED (each user subscribes to their own user_id channel)
+  RLS POLICY: Users can SELECT/UPDATE only their own notifications (user_id = auth.uid()).
+
+────────────────────────────────────────────────────────────────────────────────
+TABLE 16: admin_settings
+--------------------------------------------------------------------------------
+  id               UUID        PRIMARY KEY DEFAULT gen_random_uuid()
+  key              TEXT        UNIQUE NOT NULL
+  value            JSONB
+  label            TEXT        -- Human-readable label for admin UI
+  description      TEXT        -- What this setting controls
+  data_type        TEXT        -- 'float', 'integer', 'boolean', 'string', 'enum'
+  updated_by       UUID        REFERENCES users(id)
+  updated_at       TIMESTAMPTZ DEFAULT now()
+
+  INITIAL SEED DATA (inserted on first deploy):
+    vector_similarity_threshold    : 0.75  (float)
+    substitution_discount_max      : 0.20  (float, = 20%)
+    dispatch_timeout_seconds       : 60    (integer)
+    dispatch_radius_km             : 5.0   (float)
+    dispatch_radius_fallback_km    : 10.0  (float)
+    stock_low_threshold            : 10    (integer)
+    stock_critical_threshold       : 3     (integer)
+    gemini_recommendation_tone     : "friendly" (enum)
+    ml_retrain_interval_hours      : 168   (integer, = weekly)
+    cart_reservation_minutes       : 15    (integer)
+    max_substitution_alternatives  : 3     (integer)
+    ai_dispatch_enabled            : true  (boolean)
+
+  RLS POLICY: Admin role only for SELECT and UPDATE.
+
+────────────────────────────────────────────────────────────────────────────────
+TABLE 17: reviews
+--------------------------------------------------------------------------------
+  id               UUID        PRIMARY KEY DEFAULT gen_random_uuid()
+  user_id          UUID        REFERENCES users(id)
+  order_id         UUID        REFERENCES orders(id) UNIQUE  -- one review per order
+  rider_id         UUID        REFERENCES riders(id)
+  store_id         UUID        REFERENCES stores(id)
+  overall_rating   INTEGER     CHECK (overall_rating BETWEEN 1 AND 5)
+  rider_rating     INTEGER     CHECK (rider_rating BETWEEN 1 AND 5)
+  food_rating      INTEGER     CHECK (food_rating BETWEEN 1 AND 5)
+  comment          TEXT
+  created_at       TIMESTAMPTZ DEFAULT now()
+
+  INDEXES: reviews(store_id), reviews(rider_id), reviews(user_id)
+  RLS POLICY: Customers can INSERT for their own delivered orders. SELECT public.
+
+================================================================================
+SECTION 6: AI/ML PIPELINE SPECIFICATION
+================================================================================
+
+6.1  TENSORFLOW DEMAND FORECASTING MODEL
+
+     Architecture : LSTM Neural Network with 3 output heads
+     Input Window : 90-day rolling historical sales per product
+
+     INPUT FEATURES (per time step):
+       - units_sold_that_hour        : FLOAT (target variable in training)
+       - day_of_week_sin             : FLOAT (cyclical encoding sin(2π*d/7))
+       - day_of_week_cos             : FLOAT (cyclical encoding cos(2π*d/7))
+       - hour_of_day_sin             : FLOAT (cyclical encoding for restaurants)
+       - hour_of_day_cos             : FLOAT
+       - week_of_month               : INTEGER (1–5)
+       - is_holiday_flag             : BOOLEAN (local Pakistani holidays)
+       - weather_code                : INTEGER (0=clear, 1=rain, 2=storm)
+       - cumulative_sales_today      : FLOAT (running total to current hour)
+
+     OUTPUT HEADS:
+       - predicted_demand_24h        : FLOAT
+       - predicted_demand_48h        : FLOAT
+       - predicted_demand_7d         : FLOAT
+       (All trained simultaneously with multi-task learning)
+
+     AUXILIARY OUTPUT:
+       - confidence_score            : FLOAT (0.0–1.0), derived from prediction
+                                       variance across the 3 output heads
+
+     TRAINING SCHEDULE:
+       Full Retrain   : Every Sunday 02:00 AM (APScheduler job)
+       Incremental    : Every 6 hours (fine-tune on last 24h sales data only)
+       Data Source    : sales_history table
+       Artifact Path  : Supabase Storage "ml-models/demand_v{version}.keras"
+
+     INFERENCE FLOW:
+       1. APScheduler fires every 30 minutes
+       2. FastAPI loads model from local /tmp/ (pre-loaded at startup)
+       3. Fetch recent 90-day sales_history for each product
+       4. Run model.predict() in batch (all products per store)
+       5. Compute predicted_stockout_at = now() + (current_qty / predicted_demand_rate)
+       6. Upsert into inventory_predictions table
+       7. Trigger LangChain Restock Alert Agent for products where
+          predicted_stockout_at < now() + 48 hours
+
+     CART VALIDATION INFERENCE:
+       Triggered on every POST /inventory/validate call (real-time, per product)
+       Uses cached prediction from inventory_predictions table (< 30 min old)
+       if no cached prediction exists: runs single-product inference on demand
+
+────────────────────────────────────────────────────────────────────────────────
+6.2  LANGCHAIN AGENT: DISPATCHER CLERK
+────────────────────────────────────────────────────────────────────────────────
+
+     Purpose      : Autonomous, zero-human-touch rider assignment
+     LLM          : Gemini 2.5 Flash
+     Memory       : ConversationBufferWindowMemory (last 5 steps for context)
+     Trigger      : Supabase Realtime CDC on orders.status → 'READY_FOR_PICKUP'
+
+     TOOLS AVAILABLE TO AGENT:
+       get_available_riders(store_lat, store_lng, radius_km)
+         → Queries riders table: is_online=true, is_available=true, load < 3
+         → Returns: [{rider_id, name, lat, lng, distance_km, rating, load}]
+
+       calculate_distance_matrix(store_coords, rider_coords_list)
+         → Calls OpenRouteService Distance Matrix API
+         → Returns: {rider_id: duration_seconds} map
+
+       score_riders(riders_list)
+         → Formula: (1/distance_km * 0.5) + (avg_rating/5 * 0.3) + ((3-load)/3 * 0.2)
+         → Normalizes all scores, returns ranked list
+
+       assign_rider(rider_id, order_id)
+         → Sets orders.rider_id = rider_id, orders.status = 'RIDER_ASSIGNED'
+         → Sets riders.active_order_count += 1, riders.is_available = false
+
+       notify_rider_of_assignment(rider_id, order_id)
+         → Inserts into notifications table (type='rider_assigned')
+         → Supabase Realtime delivers to rider frontend instantly
+
+       start_acceptance_timer(rider_id, order_id, timeout_seconds)
+         → Schedules a FastAPI background task for 60 seconds
+         → If rider doesn't ACCEPT within window: calls reassign_on_timeout()
+
+       reassign_on_timeout(order_id, excluded_rider_ids)
+         → Re-runs the agent excluding previously tried riders
+
+     STEP-BY-STEP AGENT LOGIC:
+       Step 1 → Fetch available riders within 5km using get_available_riders()
+       Step 2 → If no riders found at 5km: expand to fallback radius (10km)
+       Step 3 → Call calculate_distance_matrix() for accurate travel distances
+       Step 4 → Call score_riders() to rank candidates
+       Step 5 → Call assign_rider() with top-scored rider
+       Step 6 → Call notify_rider_of_assignment()
+       Step 7 → Start 60-second acceptance timer
+       Step 8 → If ACCEPTED: log success, done
+                If REJECTED or TIMEOUT: call reassign_on_timeout(), repeat from Step 4
+       Step 9 → After 3 failed attempts: set order to 'PENDING_RIDER', alert admin
+       
+     EDGE CASE HANDLING:
+       No riders within 10km      : Alert admin, queue order with PENDING_RIDER status
+       All riders at max load      : Retry every 2 minutes until a rider frees up
+       Severe weather             : Set admin_settings.ai_dispatch_enabled = false flag,
+                                    push emergency alert to admin UI for manual override
+       Rider network disconnected : Timeout treated as rejection, auto-reassign
+
+     LOG OUTPUT: All steps logged to agent_logs table (type='dispatcher')
+
+────────────────────────────────────────────────────────────────────────────────
+6.3  LANGCHAIN AGENT: SUBSTITUTION ENGINE
+────────────────────────────────────────────────────────────────────────────────
+
+     Purpose      : Find and offer intelligent product replacements when items
+                    go out of stock during checkout
+     LLM          : Gemini 2.5 Flash
+     Memory       : None (stateless per invocation)
+     Trigger      : POST /order/checkout when ordered_quantity > inventory.quantity
+
+     TOOLS AVAILABLE TO AGENT:
+       generate_embedding(text)
+         → Calls Gemini text-embedding-004 API
+         → Returns 768-dimension float vector
+
+       search_similar_products(embedding, store_id, top_k=10)
+         → Executes pgvector cosine similarity query on products table
+         → Filters: is_active=true, store_id match, stock > 0
+         → Returns: [{product_id, name, price, similarity_score, tags, nutritional_info}]
+
+       filter_candidates(candidates, price_ceiling_factor=1.5, exclude_tags=[])
+         → Removes candidates priced > original_price * 1.5
+         → Removes candidates with any excluded tags
+
+       evaluate_substitution_quality(original_product, candidate_product)
+         → LLM prompt: "Given that a customer ordered {original}, evaluate if
+           {candidate} is a suitable substitute based on taste, nutrition, and
+           culinary use. Rate suitability 1-10 and explain in 1 sentence."
+         → Returns: {suitability_score: int, explanation: str}
+
+       calculate_offer_price(original, candidate)
+         → If candidate.price > original.price: apply discount to match original
+         → If candidate.price <= original.price: maintain candidate price
+         → Returns: {final_price, discount_percentage}
+
+       push_substitution_offer(order_id, original_id, candidate_id, reasoning, discount)
+         → Inserts into substitution_offers table
+         → Supabase Realtime delivers to customer frontend
+
+     STEP-BY-STEP AGENT LOGIC:
+       Step 1 → Detect deficit: ordered_qty > inventory.available_quantity
+       Step 2 → Build embedding text: "{name}. {description}. Tags: {tags}. {nutritional_info}"
+       Step 3 → Call generate_embedding() for the out-of-stock product
+       Step 4 → Call search_similar_products() → top 10 candidates
+       Step 5 → Call filter_candidates() to remove expensive/incompatible options
+       Step 6 → For top 5 remaining: call evaluate_substitution_quality() in parallel
+       Step 7 → Sort by (suitability_score * 0.6 + similarity_score * 0.4)
+       Step 8 → Select top 3 as the offer set
+       Step 9 → Call calculate_offer_price() per selected candidate
+       Step 10 → For each of top 3: call push_substitution_offer()
+       Step 11 → All 3 offers inserted (rank 1, 2, 3) → Realtime fires to frontend
+       Step 12 → Frontend renders modal with 3 options; user selects one
+
+     OFFER EXPIRY:
+       If user does not respond in 5 minutes:
+       → Auto-reject all substitution_offers (user_response = 'rejected')
+       → Remove item from order, recalculate order total
+       → Notify user: "Your item has been removed. Total updated."
+
+     LOG OUTPUT: Logged to agent_logs table (type='substitution')
+
+────────────────────────────────────────────────────────────────────────────────
+6.4  LANGCHAIN AGENT: RESTOCK ALERT GENERATOR
+────────────────────────────────────────────────────────────────────────────────
+
+     Purpose      : Automated procurement alerts for admin team
+     LLM          : Gemini 2.5 Flash
+     Trigger      : (A) APScheduler every 30 minutes
+                    (B) Supabase Realtime CDC when inventory.quantity drops
+                        below critical_threshold
+
+     STEP-BY-STEP LOGIC:
+       Step 1 → Query inventory_predictions WHERE predicted_stockout_at < now() + 48h
+       Step 2 → Cross-reference with inventory (actual current quantity)
+       Step 3 → Generate natural language restock memo per product:
+                "Organic Tomatoes (SKU: #PR-001) currently has 4 units remaining.
+                 AI predicts complete stockout in 6.2 hours based on today's demand
+                 spike (Saturday afternoon). Recommended restock quantity: 120 units.
+                 Confidence: 87%."
+       Step 4 → Batch insert into notifications table for all admin users
+                (type='low_stock', metadata includes product_id, quantity, prediction)
+       Step 5 → Log to agent_logs (type='restock_alert')
+
+     CRITICAL THRESHOLD FAST PATH:
+       When quantity < critical_threshold (≤ 3 units):
+       → Skip batch wait, trigger immediately via Supabase Realtime CDC
+       → Insert CRITICAL notification with red-flag metadata
+       → Admin UI renders urgent banner: "CRITICAL: Mango Juice — 1 unit left!"
+
+────────────────────────────────────────────────────────────────────────────────
+6.5  GEMINI API USAGE BREAKDOWN
+────────────────────────────────────────────────────────────────────────────────
+
+  USE CASE                        MODEL                    WHEN CALLED
+  ─────────────────────────────── ──────────────────────── ─────────────────────
+  Product Embedding Generation    text-embedding-004       Apify ingest + nightly
+  Substitution Reasoning          gemini-2.5-flash         During checkout deficit
+  Conversational Search Intent    gemini-2.5-flash         On semantic search query
+  Dispatcher Scoring Explanation  gemini-2.5-flash         Per assignment attempt
+  ETA Personalized Message        gemini-2.5-flash         On ETA update to user
+  Restock Alert Memo              gemini-2.5-flash         Every 30 min + critical
+  Predictive Restock PO Draft     gemini-2.5-flash         Admin "Generate PO" click
+
+================================================================================
+SECTION 7: FEATURE SPECIFICATIONS (10 CORE FEATURES)
+================================================================================
+
+────────────────────────────────────────────────────────────────────────────────
+FEATURE 1: REAL-TIME INTELLIGENT INVENTORY SYNC
+────────────────────────────────────────────────────────────────────────────────
+
+  Description:
+    Live, bidirectional synchronization between the physical store's POS and the
+    digital storefront, augmented with AI prediction to show risk signals before
+    actual stockout occurs.
+
+  Components Involved:
+    - FastAPI endpoint: POST /inventory/update (POS simulation webhook)
+    - Supabase Realtime on inventory table (quantity column change listener)
+    - TensorFlow inference on every significant inventory update
+    - LangChain Restock Alert Agent fires when quantity < critical_threshold
+
+  Technical Sequence:
+    1. POS system (simulated or real) sends POST /inventory/update
+       with {product_id, new_quantity, store_id}
+    2. FastAPI updates inventory.quantity using row-level lock (SELECT FOR UPDATE SKIP LOCKED)
+       to prevent concurrent race conditions during high-load checkout periods
+    3. If new_quantity < low_stock_threshold:
+       → Pull latest inventory_predictions for this product
+       → If no recent prediction (> 30 min old): run synchronous TF inference
+       → Update inventory_predictions record
+    4. If new_quantity < critical_threshold:
+       → FastAPI background task triggers Restock Alert Agent immediately
+    5. Supabase Realtime CDC fires to all subscribed admin clients (admin_inventory channel)
+    6. Product cards on storefront update stock badge in real-time via API polling
+       (Supabase Realtime is not exposed to anonymous/browsing users for inventory —
+        instead product listing API returns live stock status on each page load)
+
+  Customer-Facing Stock Badges:
+    > 10 units  : No badge shown (clean product card)
+    ≤ 10 units  : Yellow "Only {N} left!" badge
+    ≤ 3 units   : Orange "Running Out!" badge
+    0 units     : Gray "Out of Stock" badge, Add-to-Cart button disabled
+
+  Admin Impact:
+    - Live "Critical Items" widget on dashboard updates in real-time
+    - Prediction table refreshes with new stockout estimates
+    - Restock notification appears in notification feed
+
+────────────────────────────────────────────────────────────────────────────────
+FEATURE 2: AI-POWERED AUTONOMOUS OUT-OF-STOCK HANDLING
+────────────────────────────────────────────────────────────────────────────────
+
+  Description:
+    When any cart item becomes unavailable between browse time and checkout
+    (race condition window), the system does NOT cancel the order. Instead, it
+    activates the Substitution Engine to offer intelligent alternatives.
+
+  Trigger:
+    During POST /order/checkout processing — inventory deduction phase.
+    For each order_item: if ordered_qty > inventory.available_quantity → deficit detected.
+
+  User Experience Flow:
+    1. User clicks "Place Order" on checkout page
+    2. FastAPI processes checkout sequentially per cart item
+    3. For first deficit detected: Substitution Engine Agent activates
+    4. Within 3–5 seconds, a substitution modal appears on the frontend:
+
+       ┌─────────────────────────────────────────────────────────────┐
+       │  ⚠  We just ran out of Fresh Cabbage (2 kg)                │
+       │                                                             │
+       │  Based on your order, we suggest:                          │
+       │  ┌──────────────────┐ ┌──────────────────┐ ┌───────────┐   │
+       │  │ 🥦 Broccoli      │ │ 🥬 Bok Choy      │ │ 🥗 Lettuce│   │
+       │  │ PKR 280 (-10%)   │ │ PKR 320          │ │ PKR 150   │   │
+       │  │ "Equally rich in │ │ "Similar crunchy │ │ "Lighter  │   │
+       │  │ Vitamin C"       │ │ texture, stir-fry│ │ salad alt"│   │
+       │  │ [Select]         │ │ [Select]         │ │ [Select]  │   │
+       │  └──────────────────┘ └──────────────────┘ └───────────┘   │
+       │                                                             │
+       │  [Remove this item instead]         [5:00 timer]           │
+       └─────────────────────────────────────────────────────────────┘
+
+    5. User selects one option → POST /substitution/{offer_id}/respond
+    6. order_items record updated: product_id = selected_alternative, is_substituted = true,
+       substituted_for_id = original, substitution_discount = chosen discount
+    7. Order total recalculated and shown updated
+    8. If user selects "Remove": item removed from order, total adjusted
+    9. Checkout completes with modified order
+
+  Vector Search Implementation Detail:
+    - Query: SELECT id, name, price, 1-(embedding<=>$1) AS sim FROM products
+             WHERE store_id=$2 AND is_active=true AND (embedding<=>$1) < 0.30
+             ORDER BY embedding<=>$1 LIMIT 10
+    - Index: IVFFlat (100 lists, probes=10) for fast approximate nearest neighbor
+    - Additional SQL filter: tags NOT INCLUDE any avoid-tags from user preference profile
+    - Price ceiling filter: price <= original_price * 1.50 (agent tool: filter_candidates)
+
+  Edge Cases:
+    No alternative found         : Remove item, refund that item amount, notify user
+    All top alternatives OOS     : Expand search to cross-category alternatives via
+                                   Gemini-guided category broadening
+    User times out (5 min)       : Auto-reject, item removed, user notified
+
+────────────────────────────────────────────────────────────────────────────────
+FEATURE 3: DYNAMIC LIVE DELIVERY TRACKING & ETA ESTIMATION
+────────────────────────────────────────────────────────────────────────────────
+
+  Description:
+    After a rider picks up an order, the customer sees a live-updating Leaflet
+    map with the rider's GPS position moving in near-real-time, with a rolling
+    ML-powered ETA that updates every 30 seconds.
+
+  Rider GPS Data Flow:
+    Rider browser → navigator.geolocation.watchPosition()
+                  → POST payload every 5 seconds to FastAPI WebSocket
+                  → ws://api/rider/location/{rider_id}
+                  → FastAPI: INSERT into rider_locations, UPDATE riders.current_lat/lng
+                  → Supabase Realtime CDC fires INSERT on rider_locations table
+                  → Customer's frontend has active subscription to
+                    channel: "rider_locations:{order_id}"
+                  → React state updates rider marker coordinates
+                  → Framer Motion animates marker smoothly between GPS points
+
+  ETA Calculation Engine:
+    Inputs:
+      - Current rider GPS position (latest rider_locations row)
+      - Delivery address GPS (orders.delivery_lat, orders.delivery_lng)
+      - Time of day (current hour)
+      - Day of week (current day)
+
+    Steps:
+      1. Call OpenRouteService Distance Matrix API: remaining distance in meters
+         (rider_current_position → delivery_address)
+      2. Query delivery_eta_history for similar trips:
+         WHERE time_of_day = current_hour AND day_of_week = current_day
+         AND distance_km BETWEEN (remaining - 0.5) AND (remaining + 0.5)
+      3. If enough historical samples (>10): use mean(actual_duration)
+      4. If insufficient samples: use TensorFlow ETA regression model prediction
+      5. ETA (minutes) = result, stored in orders.estimated_eta
+      6. Supabase Realtime broadcasts order UPDATE to customer channel
+      7. Gemini generates personalized message:
+         "Your order is about 8 minutes away — your rider Asad is near Ferozepur Road."
+
+  Map Visual Elements:
+    - Custom SVG motorcycle/bicycle icon at rider's current position
+    - Animated pulse ring under rider icon (shows live tracking is active)
+    - Blue route polyline from rider current position to delivery address
+      (updated on every GPS point via OpenRouteService Directions call, cached 30s)
+    - Green destination pin at delivery address
+    - Smooth coordinate interpolation between GPS points (no jumpy marker)
+    - Distance badge: floating chip showing "1.4 km away"
+
+  Status Overlays on Map:
+    Order Preparing     : Orange pulsing ring at store location
+    Rider Assigned      : Static rider icon appears at store
+    Out for Delivery    : Blue animated rider icon moves toward destination
+    Delivered           : Green checkmark animation at destination
+
+────────────────────────────────────────────────────────────────────────────────
+FEATURE 4: AUTOMATED INTELLIGENT RIDER ASSIGNMENT
+────────────────────────────────────────────────────────────────────────────────
+
+  Description:
+    The LangChain Dispatcher Agent autonomously assigns orders to optimal riders
+    without any human dispatcher involvement. The entire pipeline is event-driven
+    and completes in seconds.
+
+  Trigger → Supabase Realtime CDC: orders.status transitions to 'READY_FOR_PICKUP'
+  Handler → FastAPI background task fires immediately
+
+  Scoring Formula:
+    Score = (proximity_factor * 0.50) + (rating_factor * 0.30) + (load_factor * 0.20)
+    Where:
+      proximity_factor = 1.0 / distance_km        (lower distance = higher score)
+      rating_factor    = rider.avg_rating / 5.0   (5-star = 1.0)
+      load_factor      = (3 - active_order_count) / 3.0  (0 orders = 1.0)
+
+  Acceptance Window:
+    - 60 seconds (configurable via admin_settings.dispatch_timeout_seconds)
+    - Rider sees countdown ring on their assignment card
+    - If ACCEPT: order locked to rider, customer notified
+    - If REJECT or timeout: re-run agent with this rider in excluded list
+
+  Admin Visibility During Assignment:
+    Admin Dispatcher Panel (admin_logs Realtime channel) shows:
+      "12:34:01 — Dispatcher: Order #ORD-4521 ready. Scanning riders..."
+      "12:34:02 — Dispatcher: 4 riders in range. Calculating scores..."
+      "12:34:02 — Dispatcher: Assigned to Asad Rehman (Score: 0.87, 1.2km away)"
+      "12:34:58 — Dispatcher: Rider Asad accepted. Assignment complete."
+
+  Deadlock Resolution:
+    Attempt 1-3  : Try top-3 scored riders sequentially
+    After 3 fail : Expand radius to fallback_radius_km, retry top-3 in expanded pool
+    After 6 fail : Set order status PENDING_RIDER, push CRITICAL alert to all admins,
+                   pause AI dispatch for this order, enable manual override
+
+────────────────────────────────────────────────────────────────────────────────
+FEATURE 5: CONVERSATIONAL / SEMANTIC PRODUCT SEARCH
+────────────────────────────────────────────────────────────────────────────────
+
+  Description:
+    Natural language search powered by Gemini intent extraction + pgvector
+    similarity, enabling customers to find products using conversational queries
+    rather than exact keyword matching.
+
+  Search Input Modes:
+    - Text (keyboard): natural language typed in search bar
+    - Voice: Web Speech API → text → same pipeline
+    - Barcode: QuaggaJS camera scanning → product SKU → direct lookup
+
+  Search Pipeline for Text/Voice:
+    Step 1 → User types: "Something spicy and vegetarian, no onions please"
+    Step 2 → FastAPI POST /search/semantic receives {query, store_id}
+    Step 3 → Gemini 2.5 Flash extracts intent JSON:
+             { "dietary": "vegetarian",
+               "avoid_ingredients": ["onion", "onions"],
+               "flavor_profile": "spicy",
+               "category_hint": null }
+    Step 4 → Generate query embedding via Gemini text-embedding-004
+    Step 5 → pgvector similarity search on products table with SQL filters:
+             - 'vegetarian' IN ANY(tags)
+             - 'spicy' IN ANY(tags)
+             - 'onion' NOT IN ANY(tags) AND 'onions' NOT IN ANY(tags)
+             - store_id = requested store
+             - is_active = true
+             - ORDER BY embedding <=> {query_embedding}
+             - LIMIT 10
+    Step 6 → Gemini generates a "match reason" snippet per result:
+             "Matched: vegetarian, high spice level, onion-free"
+    Step 7 → Return [{product_id, name, image, price, similarity_score, reason}]
+
+  Search Result Card (UI):
+    - Product image (square)
+    - Product name + price
+    - Similarity badge: "97% match"
+    - AI reason chip: "Spicy · Vegetarian · No Onions"
+    - Stock status badge
+    - Add-to-Cart button
+
+────────────────────────────────────────────────────────────────────────────────
+FEATURE 6: SMART CART VALIDATION & LIVE STOCK WARNINGS
+────────────────────────────────────────────────────────────────────────────────
+
+  Description:
+    Proactively warns customers of stock risk while they are still shopping,
+    before they reach checkout, preventing surprise out-of-stock events.
+
+  Mechanism — Add to Cart Event:
+    1. Customer clicks "Add to Cart" for product X
+    2. Frontend calls GET /inventory/validate?product_id={id}&requested_qty={qty}
+    3. FastAPI checks:
+       a. inventory.available_quantity (current stock minus reservations)
+       b. inventory_predictions.predicted_demand_24h (AI forecast)
+       c. Risk level = available_qty / predicted_demand_24h (ratio)
+    4. Response includes: {available, warning_level, warning_message}
+    5. Frontend renders inline warning on cart item row
+
+  Warning Levels:
+    NONE   : available_qty > low_stock_threshold AND ratio > 2.0
+    YELLOW : available_qty <= low_stock_threshold OR ratio between 1.0–2.0
+             Message: "Only {N} units left — order soon!"
+    ORANGE : available_qty <= critical_threshold OR ratio between 0.5–1.0
+             Message: "High demand! Only {N} left. Add quickly."
+    RED    : available_qty <= 2 OR ratio < 0.5
+             Message: "Last unit available — secure your order now."
+
+  Soft Inventory Reservation (Cart Hold System):
+    - When item added to cart: inventory.reserved_quantity += quantity
+    - Reservation held for: admin_settings.cart_reservation_minutes (default 15)
+    - APScheduler cleanup job runs every minute: release expired reservations
+    - On checkout completion: reserved → confirmed deduction (quantity -= ordered, reserved -= ordered)
+    - On cart item removed: reserved_quantity decremented immediately
+    - On cart abandonment (session expires): APScheduler releases reservation
+
+────────────────────────────────────────────────────────────────────────────────
+FEATURE 7: MULTI-STATUS ORDER PIPELINE WITH LIVE NOTIFICATIONS
+────────────────────────────────────────────────────────────────────────────────
+
+  Description:
+    A complete, real-time order lifecycle system with 8 status stages, automatic
+    notification delivery on every transition, and visual timeline for customers.
+
+  Order Status Flow & Transitions:
+    PENDING          → Created by customer. Payment pending verification.
+    CONFIRMED        → Payment verified. Kitchen/warehouse notified.
+    PREPARING        → Staff actively picking/cooking. (Admin manually or auto)
+    READY_FOR_PICKUP → All items packed. Dispatcher Agent triggered.
+    RIDER_ASSIGNED   → Specific rider accepted. Customer sees rider name.
+    OUT_FOR_DELIVERY → Rider picked up. Live tracking activated.
+    DELIVERED        → Rider marks complete. Review prompt shown.
+    CANCELLED        → Can occur from PENDING or CONFIRMED only. Reason stored.
+
+  Each Status Transition:
+    1. FastAPI updates orders.status + orders.updated_at
+    2. Record inserted into notifications table (user_id = customer)
+    3. Supabase Realtime CDC fires on orders table → channel "orders:{order_id}"
+    4. Customer frontend receives update → timeline step activates
+    5. Toast notification slides in at top of page
+    6. Browser push notification sent if tab not active
+
+  Customer Timeline Visual:
+    ● ORDERED ──── ● CONFIRMED ──── ● PREPARING ──── ● RIDER ASSIGNED
+                                                              │
+                                            ● DELIVERED ─── ● OUT FOR DELIVERY
+    Each step shows: timestamp, status label, and a context message.
+
+  Admin Kanban Board:
+    Columns match status values. Order cards auto-move columns in real-time.
+    Card shows: Order ID, customer name, item count, total, time elapsed.
+    Admin can drag-and-drop to manually override status (calls PATCH /order/{id}/status).
+
+────────────────────────────────────────────────────────────────────────────────
+FEATURE 8: PREDICTIVE INVENTORY ANALYTICS DASHBOARD (ADMIN)
+────────────────────────────────────────────────────────────────────────────────
+
+  Description:
+    AI-powered operational intelligence giving admins a forward-looking view of
+    inventory health, enabling proactive procurement decisions.
+
+  Data Source: inventory_predictions table (updated every 30 min by TF model)
+
+  Dashboard Widgets:
+    AT-RISK TABLE
+      Columns: Product Name | Category | Current Stock | Predicted Demand 48h |
+               Confidence | Predicted Stockout Time | Action
+      Sorted by: Predicted Stockout Time (soonest first)
+      Color-coded rows: Red (<12h), Orange (<24h), Yellow (<48h)
+
+    DEMAND HEATMAP
+      X-axis: Hours of day (0–23)
+      Y-axis: Day of week (Mon–Sun)
+      Cell value: Average units demanded (normalized, color-scaled)
+      Filter: Per category or per product
+
+    SALES VELOCITY CHART (Recharts LineChart)
+      Top 20 products, units sold per hour for last 7 days vs current day
+      Displays demand acceleration (slope steepening = spike alert)
+
+    MODEL HEALTH METRICS
+      Last retrain date/time | Model version | MAE (Mean Absolute Error)
+      Accuracy % on last 7-day test window | Confidence score distribution
+
+  Admin Actions:
+    "Override Prediction" → Manually adjust predicted demand values
+    "Generate Restock PO" → Gemini drafts natural language purchase order memo
+    "Export CSV"          → Download inventory_predictions as CSV file
+    "Retrain Now"         → Trigger immediate model retrain (POST /ml/retrain)
+
+────────────────────────────────────────────────────────────────────────────────
+FEATURE 9: AI DISPATCHER OVERSIGHT PANEL (ADMIN)
+────────────────────────────────────────────────────────────────────────────────
+
+  Description:
+    A transparent admin view into the LangChain Dispatcher Agent's real-time
+    activity, with full manual override capability for edge cases.
+
+  Panel Components:
+    LIVE AGENT ACTIVITY FEED
+      Supabase Realtime subscription to agent_logs WHERE agent_type='dispatcher'
+      Newest entries appear at top with auto-scroll
+      Each entry: timestamp | event | action | status icon (✓ / ✗)
+
+    CURRENT ASSIGNMENT QUEUE
+      All orders in READY_FOR_PICKUP and PENDING_RIDER status
+      For each: Order ID, customer name, items, time waiting, assignment attempts
+
+    RIDER AVAILABILITY MAP
+      Leaflet map showing all online riders as colored dots
+      Color: Green = available, Yellow = busy (has active order), Gray = offline
+      Click rider dot: popup with name, vehicle, rating, active order count, location
+
+    DISPATCH METRICS (last 24h)
+      Successful assignments / Total attempts = Success rate %
+      Mean time from READY_FOR_PICKUP → RIDER_ASSIGNED (seconds)
+      Top rejection reasons (tracked in agent_logs.output_data)
+
+  Manual Override Controls:
+    "Pause AI Dispatch" toggle → admin_settings.ai_dispatch_enabled = false
+                                   → All new orders go to manual assignment queue
+    "Manually Assign Rider"   → Dropdown: select order → select rider → confirm
+    "Expand Search Radius"    → Temporarily sets radius to 15km for specific order
+    "Emergency Mode"          → Broadcasts push notification to ALL online riders
+                                regardless of load; overrides normal eligibility
+
+────────────────────────────────────────────────────────────────────────────────
+FEATURE 10: DYNAMIC PARAMETER CONFIGURATION (ADMIN)
+────────────────────────────────────────────────────────────────────────────────
+
+  Description:
+    Admin can configure all AI agent parameters, business rules, and system
+    thresholds in real-time without touching code. Changes take effect
+    immediately via the admin_settings table.
+
+  Settings Categories & Controls:
+
+    INVENTORY SETTINGS
+      Low Stock Threshold     : Number input (default: 10 units)
+      Critical Threshold      : Number input (default: 3 units)
+      Cart Reservation Time   : Slider in minutes (5–30 min)
+
+    AI AGENT SETTINGS
+      Vector Similarity Min   : Slider 0.0–1.0 (default: 0.75)
+      Max Substitution Offers : Number input 1–5 (default: 3)
+      Max Substitution Disc%  : Slider 0–50% (default: 20%)
+      Gemini Response Tone    : Dropdown (Formal / Friendly / Casual)
+
+    DISPATCH SETTINGS
+      Rider Acceptance Window : Slider 30–120 seconds (default: 60)
+      Initial Search Radius   : Slider 1–10 km (default: 5 km)
+      Fallback Search Radius  : Slider 5–20 km (default: 10 km)
+      AI Dispatch Enabled     : Toggle ON/OFF
+
+    ML MODEL SETTINGS
+      Retrain Interval        : Dropdown (Daily / Weekly / Manual)
+      Prediction Scan Freq    : Dropdown (Every 15/30/60 min)
+      Confidence Threshold    : Slider (below this = flag for admin review)
+
+  Implementation: Each setting rendered as appropriate form control.
+  Save button → PATCH /admin/settings/{key} per changed field.
+  FastAPI reads admin_settings at the start of every agent execution cycle.
+
+================================================================================
+SECTION 8: FASTAPI ENDPOINT CATALOG (COMPLETE)
+================================================================================
+
+AUTH ENDPOINTS
+  POST   /auth/register                  Register new user (calls Supabase Auth)
+  POST   /auth/login                     Login, return JWT + refresh token
+  POST   /auth/logout                    Invalidate session
+  POST   /auth/refresh                   Refresh access token
+  GET    /auth/me                        Get current authenticated user profile
+  PATCH  /auth/me                        Update name, phone, default address
+
+PRODUCT & CATALOG ENDPOINTS
+  GET    /products                       List products (query: store_id, category_id,
+                                         page, limit, sort, tags, min_price, max_price)
+  GET    /products/{id}                  Single product with live stock badge data
+  GET    /categories                     Category tree (hierarchical JSON)
+  GET    /stores                         All active stores with lat/lng
+  POST   /search/semantic                Semantic search (body: {query, store_id})
+  GET    /products/{id}/similar          Top 5 similar products (pgvector, for product page)
+
+INVENTORY ENDPOINTS
+  GET    /inventory/validate             Validate cart (query: product_id, requested_qty)
+  GET    /inventory/{product_id}         Stock level + prediction for a single product
+  POST   /inventory/update               POS webhook: update stock (admin/service_role)
+  POST   /inventory/reserve              Reserve stock for cart item
+  DELETE /inventory/reserve/{cart_item_id} Release cart reservation
+  GET    /inventory/alerts               Low-stock and critical items list (admin only)
+  GET    /inventory/predictions          TensorFlow predictions table (admin only)
+
+ORDER ENDPOINTS
+  POST   /order/create                   Create draft order from cart
+  POST   /order/checkout                 Full checkout: validate, deduct, trigger agents
+  GET    /order/{id}                     Order detail with items, status, rider info
+  GET    /order/my-orders                Customer's order history (paginated)
+  PATCH  /order/{id}/status              Update status (admin/rider only)
+  POST   /order/{id}/cancel              Cancel order with reason
+  GET    /order/admin/all                All orders with filters (admin only)
+  GET    /order/admin/pipeline           Orders grouped by status (Kanban data)
+
+SUBSTITUTION ENDPOINTS
+  GET    /substitution/order/{order_id}  All offers for an order
+  GET    /substitution/{offer_id}        Single offer detail
+  POST   /substitution/{offer_id}/respond Accept/reject (body: {response, rank_selected})
+
+RIDER ENDPOINTS
+  GET    /rider/profile                  Rider's own profile and stats
+  PATCH  /rider/availability             Toggle is_online / is_available
+  GET    /rider/orders                   Orders assigned to rider (active + history)
+  PATCH  /rider/order/{id}/accept        Accept assigned order → status RIDER_ASSIGNED
+  PATCH  /rider/order/{id}/reject        Reject order → triggers re-assignment
+  PATCH  /rider/order/{id}/pickup        Mark picked up → status OUT_FOR_DELIVERY
+  PATCH  /rider/order/{id}/deliver       Mark delivered → status DELIVERED
+  WebSocket: ws://api/rider/location/{rider_id}   Continuous GPS stream
+
+TRACKING ENDPOINTS
+  GET    /tracking/{order_id}            Current rider position + ETA
+  GET    /tracking/{order_id}/route      Route polyline GeoJSON (for map rendering)
+  GET    /tracking/{order_id}/history    Full GPS trail of this delivery
+
+NOTIFICATION ENDPOINTS
+  GET    /notifications                  Current user's notifications (paginated)
+  PATCH  /notifications/{id}/read        Mark single notification as read
+  PATCH  /notifications/read-all         Mark all as read
+  DELETE /notifications/{id}            Delete a notification
+
+ADMIN ENDPOINTS
+  GET    /admin/dashboard                Aggregated KPIs (orders today, revenue, etc.)
+  GET    /admin/agent-logs               LangChain activity log (filterable by type)
+  GET    /admin/riders/map               All rider positions + status for Leaflet map
+  POST   /admin/dispatch/manual          Manually assign rider {order_id, rider_id}
+  POST   /admin/dispatch/toggle          Enable/disable AI auto-dispatch
+  POST   /admin/dispatch/expand-radius   Temporarily increase radius for an order
+  GET    /admin/settings                 Fetch all configuration key-value pairs
+  PATCH  /admin/settings/{key}           Update a specific configuration value
+
+ML ENDPOINTS
+  POST   /ml/predict-demand              Trigger fresh predictions for all products
+  POST   /ml/retrain                     Trigger full model retraining (admin only)
+  GET    /ml/model-status                Model version, last retrain, accuracy metrics
+
+DATA INGESTION ENDPOINTS
+  POST   /ingest/apify/restaurant        Apify webhook: restaurant menu data
+  POST   /ingest/apify/grocery           Apify webhook: grocery product data
+  POST   /ingest/generate-embeddings     Batch generate Gemini embeddings for new products
+
+UTILITY ENDPOINTS
+  GET    /health                         Health check (returns {status: "ok"})
+  GET    /docs                           FastAPI auto-generated OpenAPI docs (development)
+
+================================================================================
+SECTION 9: USER-SIDE COMPLETE FLOW
+================================================================================
+
+9.1  REGISTRATION & ONBOARDING
+
+  1. User visits Jalal Sons PWA (Next.js, installable on mobile)
+  2. Onboarding screen: "Sign up with Email" or "Continue with Google" (Supabase OAuth)
+  3. Email path: Enter email → confirm password → verify email (Supabase magic link)
+  4. Profile setup wizard:
+       - Full name + phone number
+       - Delivery address: typed → Nominatim autocomplete dropdown
+       - Address selected: lat/lng stored, display name shown on map preview
+  5. Role set to 'customer' in users table (auto, not user-facing)
+  6. Redirect to Home page. Store selection modal appears if multiple branches active.
+
+9.2  BROWSING & PRODUCT DISCOVERY
+
+  1. Home page loads: featured promotions carousel + category icon row + trending items grid
+  2. Category tap → category product grid with filter sidebar (mobile: bottom sheet)
+  3. Filters: price range, dietary tags (vegan, halal, gluten-free), sort order
+  4. Product cards: image, name, price, stock badge, Add to Cart button
+  5. Product detail: image gallery, description tabs (Overview / Nutrition / Reviews),
+     live stock indicator, similar products row (pgvector-powered), Add to Cart CTA
+  6. Semantic search: user types natural language → POST /search/semantic → results grid
+  7. Voice search: mic icon → browser speech recognition → text → same pipeline
+
+9.3  CART MANAGEMENT
+
+  1. Cart state: managed in Zustand store (client) + synced to Supabase on login
+  2. Adding item: optimistic UI update → immediate visual feedback
+     → Background: GET /inventory/validate → stock warning badge if needed
+     → Background: POST /inventory/reserve → soft hold placed
+  3. Removing item: DELETE /inventory/reserve/{cart_item_id} → hold released
+  4. Cart page: item list + quantity steppers + price breakdown sidebar
+  5. Address selector: saved addresses dropdown + "Add New" with Nominatim autocomplete
+  6. "Proceed to Checkout" CTA visible with total + estimated delivery time
+
+9.4  CHECKOUT FLOW (MULTI-STEP)
+
+  Step 1: Address & Timing
+    - Confirm delivery address (map preview showing store → delivery route)
+    - Estimated delivery window shown (based on current store load)
+
+  Step 2: Payment Method
+    - Cash on Delivery (COD): default, always available
+    - Card: future integration placeholder (UI shows "Coming Soon")
+    - Wallet balance (future)
+
+  Step 3: Order Review
+    - Full itemized list, discount summary, grand total
+    - Delivery notes input ("Leave at gate", "Call on arrival")
+    - Terms acceptance checkbox
+
+  Step 4: Checkout Processing
+    - "Place Order" button clicked → POST /order/checkout
+    - Loading state: "Validating your items..."
+    - If ALL items available: → Order confirmed screen
+    - If ANY item OOS: → Substitution modal appears (see Feature 2)
+    - After substitutions resolved: → Order confirmed screen
+
+  Step 5: Confirmation Screen
+    - Order ID displayed
+    - Summary of final items (including substitutions if any)
+    - "Track Your Order" CTA button
+    - Order status: PENDING → auto-transitions to CONFIRMED in seconds
+
+9.5  LIVE ORDER TRACKING
+
+  1. "Track Order" button → /track/{order_id} page
+  2. Top 60% of screen: Leaflet map (fullscreen on mobile)
+  3. Bottom 40%: collapsible status panel (swipe up/down gesture on mobile)
+  4. Status timeline shows all 8 stages with timestamps as they complete
+  5. When RIDER_ASSIGNED: rider info card appears: name, vehicle, rating, phone icon
+  6. When OUT_FOR_DELIVERY: rider marker appears on map, starts moving
+  7. ETA chip auto-updates: "~12 min" → "~8 min" → "~3 min" → "Arriving now!"
+  8. When DELIVERED: confetti animation, "Leave a Review" CTA
+  9. Review modal: 5-star ratings (overall, food, rider) + comment
+
+================================================================================
+SECTION 10: ADMIN-SIDE COMPLETE FLOW
+================================================================================
+
+10.1  ADMIN LOGIN
+  Admin logs in with Supabase Auth. JWT token contains role='admin' in user_metadata.
+  FastAPI middleware verifies role on every admin endpoint.
+  Redirect to Admin Dashboard (/admin).
+
+10.2  COMMAND DASHBOARD (/admin)
+  Loads on login. All data from GET /admin/dashboard.
+  Live widgets via Supabase Realtime subscriptions:
+    - Total Orders Today (counter, auto-increments on new orders)
+    - Revenue Today (currency figure, updates on each PAID order)
+    - Active Riders (count, updates when riders toggle online)
+    - Orders in Each Status (badge counts per column)
+  Mini-Kanban: 6-column board showing order counts per status, click to go to full orders view
+  At-Risk Items list: top 5 products predicted to stockout in <24h
+  Agent Activity Feed: last 10 agent_logs entries (Realtime-streamed)
+
+10.3  ORDER MANAGEMENT (/admin/orders)
+  Full-page Kanban board. 8 columns = 8 status values.
+  Order cards: ID (truncated), customer name, item count, total, time since creation.
+  Real-time: cards auto-move when status changes in DB via Supabase Realtime.
+  Click card: order detail side panel with full item list, customer info, rider info.
+  Drag card to different column: PATCH /order/{id}/status (manual override).
+  Filter bar: by store, date range, payment method, search by customer name or order ID.
+
+10.4  INVENTORY MANAGEMENT (/admin/inventory)
+  Tab 1 "Overview": Full product table. Columns: Product | Category | Current Stock |
+    Available | Reserved | Low Stock Threshold | Status. Inline edit for quantity.
+  Tab 2 "Predictions": TensorFlow output. Columns: Product | Demand 24h | Demand 48h |
+    Confidence | Predicted Stockout | Actions.
+  Tab 3 "Alerts": Critical and low-stock items only, sorted by urgency.
+    "Generate Restock Memo" button: POST /admin/restock-memo → Gemini drafts PO text.
+
+10.5  RIDER MANAGEMENT (/admin/riders)
+  Tab 1 "List": Table with all riders. Columns: Name | Vehicle | Status | Active Orders |
+    Avg Rating | Total Deliveries | Location | Actions.
+    Toggle is_online switch per rider. "Suspend" button sets is_available=false.
+  Tab 2 "Map": Leaflet full-screen map. All online riders as colored dots.
+    Click dot: popup with name, vehicle icon, rating stars, active order count.
+    "Assign Order" button in popup (for manual dispatch).
+
+10.6  AI DISPATCHER PANEL (/admin/dispatcher)
+  Left panel: Agent Activity Feed (Realtime stream of agent_logs, type=dispatcher).
+  Right panel: Current Assignment Queue (orders in READY_FOR_PICKUP / PENDING_RIDER).
+  Bottom bar: Dispatch Stats (24h success rate, mean assignment time).
+  Controls:
+    AI Dispatch Toggle    : ON/OFF → PATCH /admin/dispatch/toggle
+    Manual Assign Button  : Order dropdown + Rider dropdown + Confirm button
+    Expand Radius Button  : One-click expand for selected order
+    Emergency Mode Button : Broadcasts to all riders regardless of load
+
+10.7  ANALYTICS (/admin/analytics)
+  Revenue Over Time    : Recharts LineChart (today/7d/30d selector)
+  Orders By Hour       : Recharts BarChart (heatmap-style hour distribution)
+  Top Products         : Recharts PieChart (by units sold)
+  Rider Leaderboard    : Table ranked by total deliveries + avg rating
+  AI Substitution Stats: Acceptance rate %, most accepted alternatives, revenue saved
+
+10.8  SETTINGS (/admin/settings)
+  Grouped form matching admin_settings table rows.
+  Each setting: label, description tooltip, appropriate input control, current value.
+  "Save Changes" button: fires PATCH /admin/settings/{key} for each modified field.
+  Changes confirmed with success toast + Realtime update to all admin sessions.
+
+================================================================================
+SECTION 11: RIDER-SIDE COMPLETE FLOW
+================================================================================
+
+11.1  RIDER LOGIN & STATUS
+  1. Rider logs into same app (role='rider' detected, redirected to Rider Dashboard)
+  2. Dashboard shows: "Go Online" toggle, earnings today, deliveries count
+  3. Toggle Online: PATCH /rider/availability → {is_online: true}
+  4. Now eligible for Dispatcher Agent consideration
+
+11.2  RECEIVING AN ORDER ASSIGNMENT
+  1. Supabase Realtime fires on channel "rider_orders:{rider_id}"
+  2. New assignment card slides in from top of screen
+  3. Card contains: Pickup address, Delivery address, Order summary, Estimated earnings
+  4. Countdown ring shows 60 seconds remaining
+  5. Two buttons: large green ACCEPT button + small red REJECT button
+  6. ACCEPT: PATCH /rider/order/{id}/accept → Dispatcher confirms, tracking activates
+  7. REJECT: PATCH /rider/order/{id}/reject → Dispatcher re-assigns automatically
+
+11.3  NAVIGATION TO STORE (PICKUP PHASE)
+  1. After ACCEPT: map screen shows store location as destination
+  2. GraphHopper turn-by-turn directions displayed at top of map
+  3. Rider follows directions to store
+  4. Arrives: "I've Arrived" button → status update notification sent to admin
+  5. After collecting items: "Order Picked Up" button → PATCH /rider/order/{id}/pickup
+  6. Status → OUT_FOR_DELIVERY, GPS tracking stream activates
+
+11.4  GPS STREAMING (DELIVERY PHASE)
+  1. After pickup: JavaScript watchPosition() starts streaming GPS
+  2. Data sent to FastAPI WebSocket every 5 seconds
+  3. Rider sees real-time map with navigation to customer address
+  4. Turn-by-turn from GraphHopper displayed
+  5. Customer can see rider moving on their tracking page simultaneously
+
+11.5  DELIVERY COMPLETION
+  1. Rider arrives at delivery address
+  2. "Mark as Delivered" button pressed → PATCH /rider/order/{id}/deliver
+  3. order.status = DELIVERED
+  4. GPS stream stops
+  5. riders.is_available = true (ready for next assignment)
+  6. sales_history records inserted for all order items (ML training data)
+  7. delivery_eta_history record inserted (actual vs predicted, for model improvement)
+  8. Customer receives "Delivered!" push notification + review prompt
+
+================================================================================
+SECTION 12: REAL-TIME SYSTEM SPECIFICATION (ALL CHANNELS)
+================================================================================
+
+Supabase Realtime uses PostgreSQL Logical Replication (CDC) to broadcast
+row-level changes to subscribed frontend clients.
+
+CHANNEL: orders:{order_id}
+  Event source : UPDATE on orders table WHERE id = {order_id}
+  Subscribers  : Customer with that order_id
+  Payload      : {id, status, rider_id, estimated_eta, updated_at}
+  Frontend     : Updates status timeline, shows/hides map, updates ETA chip
+
+CHANNEL: rider_locations:{order_id}
+  Event source : INSERT on rider_locations WHERE order_id = {order_id}
+  Subscribers  : Customer with active OUT_FOR_DELIVERY order
+  Payload      : {latitude, longitude, recorded_at, heading_degrees}
+  Frontend     : Animates rider icon to new coordinates on Leaflet map
+
+CHANNEL: rider_orders:{rider_id}
+  Event source : UPDATE on orders WHERE rider_id = {rider_id}
+                 AND new status IN ('RIDER_ASSIGNED')
+  Subscribers  : Rider user
+  Payload      : Full order object + customer_name + delivery_address
+  Frontend     : Slides in assignment card with countdown timer
+
+CHANNEL: admin_orders
+  Event source : INSERT and UPDATE on orders table
+  Subscribers  : Admin dashboard
+  Payload      : {id, status, user_id, total_amount, store_id, created_at}
+  Frontend     : Moves cards between Kanban columns, updates column counts
+
+CHANNEL: admin_riders
+  Event source : UPDATE on riders table (is_online, current_lat, current_lng)
+  Subscribers  : Admin dashboard, Dispatcher panel
+  Payload      : {id, is_online, is_available, current_latitude, current_longitude}
+  Frontend     : Updates rider dots on admin map view
+
+CHANNEL: admin_inventory
+  Event source : UPDATE on inventory WHERE quantity <= low_stock_threshold
+  Subscribers  : Admin dashboard
+  Payload      : {product_id, quantity, product_name, predicted_stockout_at}
+  Frontend     : Flashes At-Risk widget, updates critical items count
+
+CHANNEL: admin_agent_logs
+  Event source : INSERT on agent_logs table
+  Subscribers  : Admin dispatcher panel
+  Payload      : {agent_type, trigger_event, output_data, status, created_at}
+  Frontend     : Prepends new entry to live activity feed
+
+CHANNEL: notifications:{user_id}
+  Event source : INSERT on notifications WHERE user_id = {user_id}
+  Subscribers  : All logged-in users (their own user_id channel)
+  Payload      : {title, body, type, metadata, created_at}
+  Frontend     : Toast notification + increment bell badge count
+
+CHANNEL: substitution_offers:{user_id}
+  Event source : INSERT on substitution_offers linked to user's active order
+  Subscribers  : Customer during active checkout
+  Payload      : Full substitution offer with AI reasoning
+  Frontend     : Triggers substitution modal overlay
+
+================================================================================
+SECTION 13: MAPS & GEOLOCATION SPECIFICATION
+================================================================================
+
+13.1  LEAFLET.JS CONFIGURATION
+  Tile URL        : https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png
+  Attribution     : "© <a href='https://www.openstreetmap.org/copyright'>OpenStreetMap</a> contributors"
+  Default Center  : [31.5204, 74.3587] (Lahore, Pakistan)
+  Default Zoom    : 14
+  Zoom Range      : 10 (city) to 19 (street level)
+  Map Heights     : 300px embedded (order detail) / Full viewport (tracking page)
+  Custom Icons    :
+    - Rider motorcycle : custom SVG orange icon with shadow
+    - Store location   : custom SVG building icon
+    - Customer address : custom SVG pin icon (green)
+    - Admin rider dots : colored circle markers (green/yellow/gray)
+
+13.2  BROWSER GEOLOCATION (User & Rider)
+  API             : navigator.geolocation
+  User (one-time) : getCurrentPosition() → pan map to user position
+  Rider (streaming): watchPosition({enableHighAccuracy: true, maximumAge: 5000})
+  Permission flow : Browser native prompt on first page visit requiring location
+  Fallback        : Manual address entry if permission denied
+
+13.3  ADDRESS AUTOCOMPLETE (Nominatim)
+  Search Endpoint : https://nominatim.openstreetmap.org/search
+  Params          : q={query}, format=json, limit=5, countrycodes=pk
+  Debounce        : 300ms (fire after user stops typing)
+  Caching         : 5-minute client-side cache per unique query string
+  Rate Limiting   : Single concurrent request (cancel previous on new keystroke)
+  User-Agent      : "JalalSons/1.0 (your-email@domain.com)" — REQUIRED by Nominatim ToS
+  Result display  : {display_name, lat, lon} → address row in dropdown
+  On select       : lat/lng stored for delivery coordinates
+
+13.4  REVERSE GEOCODING (Nominatim)
+  Endpoint        : https://nominatim.openstreetmap.org/reverse
+  Params          : lat={lat}, lon={lng}, format=json
+  Used when       : User shares device GPS location → convert to human address string
+  Result field    : display_name → shown in address field
+
+13.5  ROUTE CALCULATION (OpenRouteService)
+  Endpoint        : https://api.openrouteservice.org/v2/directions/{profile}
+  Auth            : Header: Authorization: Bearer {ORS_API_KEY}
+  Profiles used   :
+    driving-car     : motorcycle and car riders
+    cycling-regular : bicycle riders
+  Request body    : {coordinates: [[rider_lng, rider_lat], [delivery_lng, delivery_lat]]}
+  Response used   :
+    routes[0].geometry   : GeoJSON LineString → rendered as Leaflet Polyline
+    routes[0].summary.distance : remaining meters (for ETA calculation)
+    routes[0].summary.duration : estimated seconds by road conditions
+  Free tier limit : 2,000 requests/day, 500 requests/minute
+  Caching strategy: Cache route per (start_approx_lat/lng, end_lat/lng) rounded to 3 decimals
+                    Cache TTL: 2 minutes (refresh on significant rider movement)
+
+13.6  ALTERNATIVE ROUTES & NAVIGATION (GraphHopper)
+  Endpoint        : https://graphhopper.com/api/1/route
+  Auth            : Query param: key={GRAPHHOPPER_API_KEY}
+  Used for        : Rider navigation screen (turn-by-turn instructions)
+  Request params  : point={lat,lng}&point={lat,lng}&vehicle=car&instructions=true
+                    &alternative_route.max_paths=2
+  Response used   :
+    paths[0].points      : GeoJSON LineString (primary route polyline)
+    paths[0].instructions: [{text, distance, interval}] for turn-by-turn display
+    paths[1]             : Alternative route (shown as dashed line option)
+  Free tier limit : 500 requests/day
+  Caching strategy: Cache per (origin, destination) pair, TTL 5 minutes
+
+13.7  DISTANCE MATRIX (OpenRouteService)
+  Endpoint        : https://api.openrouteservice.org/v2/matrix/driving-car
+  Used by         : Dispatcher Agent for scoring multiple riders in one API call
+  Request body    : {sources: [[store_lng, store_lat]],
+                     destinations: [[r1_lng, r1_lat], [r2_lng, r2_lat], ...],
+                     metrics: ["duration","distance"]}
+  Response        : {durations: [[d1, d2, ...]], distances: [[m1, m2, ...]]}
+  Efficiency      : 1 API call for up to 50 rider candidates = very efficient
+
+================================================================================
+SECTION 14: WEBSOCKET COMMUNICATION SPECIFICATION
+================================================================================
+
+FastAPI WebSocket Endpoint: ws://api/rider/location/{rider_id}
+
+  CONNECTION LIFECYCLE:
+    1. Rider app opens WebSocket connection after accepting an order
+    2. FastAPI validates rider_id from JWT in connection query param
+    3. Connection accepted: server registers rider_id → WebSocket mapping
+    4. Rider browser starts watchPosition() → sends message every 5 seconds
+    5. Message format (JSON string):
+       {"lat": 31.4820, "lng": 74.3150, "speed": 28.5, "heading": 180.0, "ts": "ISO8601"}
+    6. FastAPI handler:
+       a. Parses message
+       b. Inserts into rider_locations table
+       c. Updates riders.current_latitude and current_longitude
+       d. Computes ETA delta (if position changed significantly: > 50m)
+       e. If ETA changed: updates orders.estimated_eta, generates Gemini message
+    7. Rider app also receives incoming messages (optional):
+       {"type": "assignment_update", "status": "..."}  for new order assignments
+    8. Disconnection: on WebSocket close, FastAPI removes rider from active map
+       Rider GPS streaming naturally stops when watchPosition() is cleared
+
+  RECONNECTION STRATEGY:
+    Client-side: Exponential backoff (1s, 2s, 4s, 8s, max 30s) on disconnect
+    Server-side: Accepts new connection and resumes processing from latest GPS
+
+================================================================================
+SECTION 15: SECURITY & AUTHENTICATION ARCHITECTURE
+================================================================================
+
+15.1  SUPABASE AUTH CONFIGURATION
+  Provider        : Supabase Auth (built-in JWT issuance)
+  JWT Secret      : Auto-managed by Supabase (RSA-256)
+  Access Token    : 1 hour expiry
+  Refresh Token   : 7 days expiry (stored in httpOnly cookie on Next.js)
+  OAuth Providers : Google (optional, configured in Supabase Auth dashboard)
+  Custom Claims   : user_metadata.role = 'customer'|'rider'|'admin'
+  MFA             : Optional TOTP via Supabase Auth for admin accounts
+
+15.2  ROW-LEVEL SECURITY (RLS) POLICIES
+
+  users Table:
+    SELECT: auth.uid() = id  (users see own row only)
+    UPDATE: auth.uid() = id
+    Admin override: role check in JWT → service_role for admin reads
+
+  orders Table:
+    SELECT for customers: auth.uid() = user_id
+    SELECT for riders: EXISTS(SELECT 1 FROM riders WHERE user_id=auth.uid() AND id=orders.rider_id)
+    SELECT for admins: (auth.jwt()->'user_metadata'->>'role') = 'admin'
+    INSERT/UPDATE: service_role only (all order mutations go through FastAPI backend)
+
+  inventory Table:
+    SELECT: No direct customer access (served through API only)
+    SELECT for admins and riders: role check
+    All writes: service_role only
+
+  riders Table:
+    SELECT: All authenticated users can see basic rider info (name, vehicle)
+    UPDATE: auth.uid() = user_id (rider can update own availability)
+    Full access: service_role and admin role
+
+  admin_settings Table:
+    ALL operations: role = 'admin' only
+    service_role also has full access (for agent reads at runtime)
+
+  agent_logs Table:
+    SELECT: admin role only
+    INSERT: service_role only
+
+15.3  FASTAPI API SECURITY
+  JWT Verification : All endpoints require Authorization: Bearer {token} header
+                     FastAPI verifies against Supabase JWKS endpoint
+  Role Extraction  : Decoded from JWT custom claim user_metadata.role
+  Rate Limiting    : FastAPI middleware: 100 requests/minute per user (sliding window)
+  CORS             : Allowed origins: {Vercel frontend domain only}
+  HTTPS            : Enforced on both Railway (backend) and Vercel (frontend)
+  Input Validation : Pydantic models on all FastAPI request bodies (auto-sanitized)
+
+15.4  SERVICE ROLE KEY MANAGEMENT
+  - Supabase service_role key stored ONLY as backend environment variable
+  - Never exposed to Next.js frontend or any client-side code
+  - Frontend uses anon key (public, safe to expose) — RLS restricts access
+  - All mutations requiring service_role go through FastAPI backend endpoints
+
+15.5  DATA PRIVACY
+  Passwords        : Never stored by application (Supabase Auth handles bcrypt hashing)
+  Payment data     : Not stored for COD (future card: delegate to PCI-compliant provider)
+  GPS data         : rider_locations retained 30 days, then auto-purged
+  Personal data    : Never logged in agent_logs (PII stripped before insert)
+
+================================================================================
+SECTION 16: UI/UX SPECIFICATION (PROFESSIONAL LEVEL — ALL PAGES)
+================================================================================
+
+16.1  DESIGN SYSTEM
+
+  COLOR PALETTE:
+    Primary Background   : #0F1624  (Deep Navy)
+    Surface Cards        : #1A2332  (Slightly lighter navy)
+    Accent / CTA         : #FF6B35  (Jalal Sons Orange)
+    Accent Hover         : #E55A28  (Darker orange)
+    Success              : #22C55E  (Green — delivered, in-stock)
+    Warning              : #FBBF24  (Amber — low stock, pending)
+    Danger               : #EF4444  (Red — critical, OOS, error)
+    Muted Text           : #6B7280  (Gray)
+    Secondary Text       : #9CA3AF  (Light gray)
+    Border               : #2D3748  (Dark border)
+    White Text           : #F9FAFB
+
+  TYPOGRAPHY:
+    Headings             : Poppins (600, 700 weights) — loaded via Google Fonts
+    Body Text            : Inter (400, 500) — loaded via Google Fonts
+    Numeric / Mono       : JetBrains Mono (400) — prices, order IDs, distances
+    Base font size       : 16px, scale: 12/14/16/18/20/24/32/40/48px
+
+  COMPONENT DESIGN:
+    Border Radius        : 12px cards, 8px buttons, 6px inputs, 20px badges
+    Shadows              : sm: (0 1px 2px rgba(0,0,0,0.4)) — hover state
+                           md: (0 4px 6px rgba(0,0,0,0.5)) — card default
+                           lg: (0 10px 25px rgba(0,0,0,0.6)) — modals/dropdowns
+    Button Sizes         : xs(28px) / sm(36px) / md(44px) / lg(52px) height
+    Grid System          : 12-column fluid grid, max-width 1280px, centered
+
+  ANIMATIONS (Framer Motion):
+    Page transitions     : Fade-in + slight Y-translate (0.2s ease)
+    Modal appear         : Scale from 0.9 to 1.0 + fade (0.15s)
+    Toast notifications  : Slide in from top-right (0.2s spring)
+    Map marker movement  : Linear interpolation between GPS coordinates (0.5s)
+    Status step activate : Scale bounce on active step (0.3s spring)
+    Rider pulsing ring   : CSS infinite animation (2s ease-in-out)
+    Cart badge count     : Number increment animation (scale-pop 0.2s)
+    Loading skeleton     : Shimmer animation on gray gradient backgrounds
+
+────────────────────────────────────────────────────────────────────────────────
+16.2  CUSTOMER APP — ALL PAGES
+────────────────────────────────────────────────────────────────────────────────
+
+PAGE: HOME ("/")
+  Layout         : Full-width. Sticky top nav. Scrollable content below.
+  Navigation Bar :
+    - Jalal Sons logo (left)
+    - Store selector chip (center) — shows active branch name
+    - Cart icon with item count badge (right)
+    - Notification bell with unread count (right)
+    - User avatar circle with dropdown (right)
+  Hero Section   :
+    - Full-width banner carousel (3 slides: promotions, new arrivals, offers)
+    - Auto-play 5 seconds, swipeable on mobile
+  Search Bar     :
+    - Full-width below hero on mobile / top-nav on desktop
+    - Placeholder: "Search for groceries, meals, snacks..."
+    - Right icons: mic (voice search) + barcode (scan)
+    - On focus: expands to full-screen search overlay on mobile
+  Category Row   :
+    - Horizontal scroll on mobile, grid on desktop
+    - Each category: icon (SVG) + label + item count badge
+    - Categories: Vegetables, Fruits, Dairy, Bakery, Beverages, Meat,
+                  Ready Meals, Snacks, Personal Care, Household
+  Featured Section: "Today's Picks" — 4-col grid (2 on mobile)
+  Flash Sale      : Countdown timer section if active promotion
+  Recent Orders   : Last 2 orders card strip (logged-in users only)
+
+PAGE: PRODUCT GRID ("/category/{slug}" or "/search")
+  Layout         : Filters sidebar (240px) left + product grid right (desktop)
+                   Bottom sheet drawer for filters (mobile)
+  Filter Options :
+    - Price range: dual-handle slider (PKR 0 – 5000)
+    - Dietary tags: checkbox group (Vegan, Halal, Gluten-Free, Organic, Low-Calorie)
+    - Sort: dropdown (Relevance / Price Low→High / Price High→Low / Newest / Popular)
+    - In-Stock Only toggle
+  Product Card (grid cell) :
+    - Square image (fills card top, 1:1 ratio)
+    - Product name (max 2 lines, ellipsis)
+    - Price in bold PKR format
+    - Stock badge (positioned top-left over image): NONE / "3 left" / OOS
+    - Add to Cart button (full-width, orange): shows quantity stepper after first add
+    - Heart icon (save to wishlist — future feature, grayed out)
+  Pagination / Infinite Scroll: 20 items per fetch, scroll-trigger next page
+
+PAGE: PRODUCT DETAIL ("/product/{id}")
+  Layout         : Two-column desktop (image 50% | info 50%) / Stacked mobile
+  Left panel     : Image gallery — primary large image + 4 thumbnail row
+  Right panel    :
+    - Category breadcrumb (clickable links)
+    - Product name (h1, Poppins 28px)
+    - Price (JetBrains Mono, 24px, orange)
+    - Unit display ("per kg", "per piece")
+    - Stock badge (live, refreshes every 60s via polling)
+    - Quantity stepper + Add to Cart CTA
+    - Tags row: colored chips ("Organic", "Halal", "Fresh Daily")
+    - Expandable description
+  Tabs Section   :
+    - Tab 1 "Overview": Full description paragraph
+    - Tab 2 "Nutrition": Table of calories, protein, carbs, fat per unit
+    - Tab 3 "Reviews": Rating summary + individual review cards
+  Similar Products Row:
+    - "You might also like" horizontal scroll of 6 cards
+    - Powered by pgvector similarity search (GET /products/{id}/similar)
+
+PAGE: CART ("/cart")
+  Layout         : Item list (left 60%) + Summary sidebar (right 40%) desktop
+                   Stacked mobile
+  Empty state    : Illustration + "Your cart is empty" + "Start Shopping" button
+  Cart Item Row  :
+    - Product thumbnail (48x48px)
+    - Name + unit
+    - Stock warning text (orange/red if low, blank if healthy)
+    - Quantity stepper (−/quantity/+), disable + when at max available
+    - Unit price + row total
+    - Remove (×) button
+  Summary Sidebar:
+    - Subtotal
+    - Delivery fee (fixed or distance-based)
+    - Promo code input + Apply button
+    - Discount line (appears if promo valid)
+    - Grand Total (large, bold)
+    - Estimated delivery time (based on store load)
+    - Delivery address mini-card with "Change" link
+    - "Proceed to Checkout" button (orange, full-width, disabled if cart empty)
+
+PAGE: CHECKOUT ("/checkout")
+  Multi-step horizontal stepper at top: Address → Payment → Review → Done
+
+  Step 1 — Address & Delivery:
+    - Saved addresses: radio card group (each card shows label + address preview)
+    - "Add New Address" option: text input with Nominatim autocomplete
+    - Mini Leaflet map preview (200px tall): pin at selected delivery address
+    - Estimated delivery: "25–35 min" (from store distance + current load)
+    - Delivery notes textarea
+
+  Step 2 — Payment:
+    - COD card (default selected, green checkmark on selection)
+    - Card payment card (grayed, "Coming Soon" badge)
+    - Order amount recap (sticky bottom)
+    - "Continue" button
+
+  Step 3 — Review Order:
+    - Full order item list with final prices (post any discounts)
+    - Promo code entry if not done in cart
+    - "Place Order" button (orange, large)
+    - Terms of service checkbox
+
+  SUBSTITUTION MODAL (overlays checkout on OOS detection):
+    - Dark overlay behind modal
+    - Title: "We just ran out of [Product Name]"
+    - Subtitle: "Based on your order, here are the best alternatives:"
+    - 3 alternative cards in row (scrollable on mobile):
+        Each card: product image, name, price (with discount badge if applicable),
+                   AI reason sentence, "Select" button
+    - "Remove this item" text link
+    - 5:00 countdown timer (progress bar)
+    - Footer: "No suitable alternative? View more options" (expands to 10 results)
+
+  Step 4 — Confirmation:
+    - Checkmark animation (Framer Motion)
+    - "Order Placed!" heading
+    - Order ID (mono font, copyable chip)
+    - Final order summary (items + total)
+    - "Track Your Order" button (primary CTA)
+    - "Continue Shopping" text link
+
+PAGE: ORDER TRACKING ("/track/{order_id}")
+  Layout         : Full-screen on mobile. Split 60/40 on desktop.
+  Map Section (top 60% or left side desktop):
+    - Leaflet map: rider icon + destination pin + route polyline
+    - ETA chip (floating, bottom-center of map): "~8 min • 1.2 km"
+    - "Refresh route" icon (re-fetches ORS route on demand)
+  Status Panel (bottom 40% or right side desktop):
+    - Rider info card (visible after RIDER_ASSIGNED):
+        Avatar circle | Name | Vehicle type icon | ★ Rating | Phone icon
+    - Order status timeline (vertical on mobile, horizontal on desktop):
+        Each step: icon (check if past, animated pulse if current, gray if future)
+        Label + timestamp (when it occurred)
+    - "Contact Support" button (opens WhatsApp/phone link)
+  Post-Delivery (DELIVERED status):
+    - Confetti burst animation
+    - "How was your experience?" heading
+    - 5-star rating row for Food quality
+    - 5-star rating row for Delivery speed
+    - 5-star rating row for Rider
+    - Comment textarea (optional)
+    - "Submit Review" button → POST /reviews
+
+PAGE: MY ORDERS ("/orders")
+  Tabs: Active Orders | Past Orders
+  Order Card:
+    - Header row: Order #{id} (truncated) | Date + time | Total (PKR)
+    - Items preview: 3 product thumbnails + "+N more" chip
+    - Status badge (color-coded)
+    - CTA button: "Track" (active) or "Reorder" (past) or "View Details"
+
+PAGE: PROFILE ("/profile")
+  Sections (vertical tabs on desktop, stacked on mobile):
+    Personal Info  : Edit name, phone, email (readonly)
+    Addresses      : Saved addresses list, add/edit/delete with map picker
+    Order History  : Quick link to /orders
+    Notifications  : Toggle push, email notification preferences per type
+    App Theme      : Dark/Light toggle (dark default)
+    Logout         : Confirmation modal
+
+────────────────────────────────────────────────────────────────────────────────
+16.3  ADMIN APP — ALL PAGES
+────────────────────────────────────────────────────────────────────────────────
+
+Admin app uses same Next.js codebase, different layout shell (sidebar navigation
+instead of top navigation).
+
+SIDEBAR NAVIGATION (Admin):
+  Logo + "Admin Panel" label at top
+  Navigation links with icons:
+    Dashboard | Orders | Inventory | Riders | Dispatcher | Analytics | Settings
+
+  Collapsible on desktop (icon-only mode), hidden + hamburger on mobile
+
+PAGE: DASHBOARD ("/admin")
+  Top stats strip (4 cards):
+    Total Orders Today | Revenue Today (PKR) | Active Riders | Critical Items
+  Row 2 (3-column):
+    Col 1: Mini Kanban (order counts per status, color-coded)
+    Col 2: At-Risk Inventory (top 5 table with stockout times)
+    Col 3: AI Agent Feed (last 10 log entries, auto-refreshing)
+  Row 3:
+    Revenue Today Chart (Recharts LineChart: hourly, current vs yesterday)
+
+PAGE: ORDERS ("/admin/orders")
+  Full Kanban board. 8 status columns.
+  Each column: status label + count badge + vertical scroll of cards
+  Drag-and-drop: react-beautiful-dnd or @dnd-kit
+  Search + Filter bar above: date range picker, store selector, status filter
+  Click card: right-side drawer opens with full order detail
+    Order drawer: customer info, items list, rider info, status history, action buttons
+
+PAGE: INVENTORY ("/admin/inventory")
+  3 tabs as described in Feature 8.
+  Overview tab: Ag-Grid style table (sortable, filterable columns)
+    Inline edit on quantity cell (click to edit, enter to save)
+  Color coding: Row background: default (green tint) / low (yellow tint) / critical (red tint)
+
+PAGE: RIDERS ("/admin/riders")
+  List tab: Table with status toggles (react-switch)
+    Click row: expand to show recent delivery history, rating breakdown
+  Map tab: Full-screen Leaflet map
+    Legend: Green=available, Yellow=busy, Gray=offline
+    Rider popup: avatar, name, vehicle, rating stars, 2 action buttons
+
+PAGE: DISPATCHER ("/admin/dispatcher")
+  Left (60%): Agent log feed with color-coded status badges
+  Right (40%): Assignment queue table
+  Top bar: Stats strip (success rate, mean time, queued orders count)
+  Controls: Toggle, manual assign modal, expand radius, emergency mode button
+
+PAGE: ANALYTICS ("/admin/analytics")
+  Date range selector at top (Today / 7 Days / 30 Days / Custom)
+  4 chart panels in 2x2 grid:
+    Revenue trend | Orders by hour
+    Product popularity | Rider leaderboard table
+
+PAGE: SETTINGS ("/admin/settings")
+  Grouped accordion sections matching admin_settings categories
+  Each setting: label + tooltip icon + control + current value display
+  "Save All Changes" button at bottom (only enabled when changes pending)
+
+────────────────────────────────────────────────────────────────────────────────
+16.4  RIDER APP — ALL PAGES
+────────────────────────────────────────────────────────────────────────────────
+
+Rider app shares the same Next.js app, role-detected, different shell.
+Designed mobile-first (most riders use phones).
+
+PAGE: RIDER DASHBOARD ("/rider")
+  Online toggle (large, prominent): Green pill when online, gray when offline
+  Earnings today: Large number, PKR format
+  Deliveries count today: Counter
+  Current order card (if active): shows destination + status + map button
+  Recent delivery history: last 5 completed orders strip
+
+PAGE: ORDER ACCEPTANCE ("/rider/order/{id}")
+  Visible for 60 seconds after assignment
+  Map: Leaflet showing pickup store location
+  Card: Order summary, item count, delivery distance, estimated earnings
+  Countdown: circular progress ring + "59s remaining" text
+  Buttons: Large green ACCEPT | Small outlined red REJECT
+
+PAGE: NAVIGATION ("/rider/navigate/{order_id}")
+  Full-screen Leaflet map (90% of screen)
+  Turn instruction bar (top 10%): "Turn right on Canal Road — 300m"
+  Bottom action bar:
+    Phase 1 (going to store): "I've Arrived at Store" button
+    Phase 2 (going to customer): "Order Delivered" button
+  Route polyline on map (GraphHopper primary route)
+  Alternative route toggle (dashed line, tap to switch)
+  Speed indicator chip (top-right, shows current speed from GPS)
+
+================================================================================
+SECTION 17: FREE API INTEGRATION DETAILS
+================================================================================
+
+  SERVICE                 PLAN         LIMIT                API KEY REQUIRED
+  ──────────────────────  ─────────── ──────────────────── ────────────────────
+  Google Gemini Flash     Free        1M tokens/day        YES (ai.google.dev)
+  Gemini text-embedding   Free        Batch 100/call       (same key)
+  Supabase (DB+Auth+RT)   Free        500MB, 50k MAU       YES (dashboard)
+  OpenRouteService        Free tier   2,000 req/day        YES (openrouteservice.org)
+  GraphHopper             Free tier   500 req/day          YES (graphhopper.com)
+  Nominatim (OSM)         Free        1 req/sec            NO (User-Agent required)
+  Leaflet + OSM tiles     Free        Unlimited            NO
+  Browser Geolocation     Free        Unlimited            NO (HTTPS required)
+  Browser Push API        Free        Unlimited            NO (HTTPS + SW required)
+  Apify Scrapers          Free tier   $5 credit/mo         YES (apify.com)
+  Resend (email)          Free        3,000 emails/mo      YES (resend.com)
+  TensorFlow / Keras      Free        Open source          NO
+  LangChain               Free        Open source          NO
+  Railway.app (backend)   Free tier   $5 credit/mo         NO (OAuth)
+  Vercel (frontend)       Free         Unlimited deploys    NO (OAuth)
+
+================================================================================
+SECTION 18: DATA INGESTION & SCRAPING PIPELINE (APIFY)
+================================================================================
+
+18.1  RESTAURANT MENU SCRAPER
+
+  Actor URL   : apify.com/its_raghav/restaurant-menu-scraper
+  Input       : {startUrls: [{url: "..."}], maxItems: 500}
+  Output/Item : {name, description, price, category, image_url, available, menuSection}
+  Webhook     : On RUN SUCCEEDED → POST https://api.domain.com/ingest/apify/restaurant
+  Payload     : {"body": {{outputBody}}}  (Apify template variable)
+
+  FastAPI Handler Logic:
+    1. Parse JSON array from webhook body
+    2. Get or create store record for the restaurant
+    3. Get or create category based on menuSection value
+    4. For each item: UPSERT into products table
+       (match on: name + store_id, update price/description/image on conflict)
+    5. For new products: INSERT into inventory (quantity = 50 default for restaurant)
+    6. Queue embedding generation: collect all new product_ids
+    7. After upsert loop: call POST /ingest/generate-embeddings internally
+
+18.2  GROCERY SCRAPER
+
+  Actor URL   : apify.com/piotrv1001/instacart-scraper
+  Input       : {storeCode: "...", category: "...", maxResults: 200}
+  Output/Item : {name, description, price, unit, category, image_url, nutritional_info}
+  Webhook     : On RUN SUCCEEDED → POST https://api.domain.com/ingest/apify/grocery
+  Handler     : Same pattern as restaurant. nutritional_info stored as JSONB.
+  Inventory   : Default quantity = 100 for grocery items.
+
+18.3  EMBEDDING GENERATION PIPELINE
+
+  Endpoint    : POST /ingest/generate-embeddings (internal, also called nightly by scheduler)
+  Process:
+    1. Query: SELECT id, name, description, tags, nutritional_info
+               FROM products WHERE embedding IS NULL LIMIT 100
+    2. For each product: build embedding text string:
+         "{name}. {description}. Tags: {tags.join(', ')}. "
+         + "Nutritional: calories={cals}, protein={prot}g, carbs={carbs}g."
+    3. Batch call Gemini text-embedding-004:
+         Send up to 100 texts per API call
+         Model returns [{values: [0.123, -0.456, ...]}] per text (768 floats each)
+    4. For each result: UPDATE products SET embedding = result.values WHERE id = product.id
+    5. If more than 100 remaining: queue next batch (recursive background task)
+    6. Log: total embedded, time taken, any failures
+
+  Retry Logic: Products with NULL embedding after 3 attempts flagged in agent_logs.
+
+================================================================================
+SECTION 19: VECTOR SEARCH & SEMANTIC ENGINE (pgvector)
+================================================================================
+
+19.1  PGVECTOR EXTENSION SETUP
+  Enabled in Supabase via: Extensions → pgvector (enable toggle in dashboard)
+  SQL to run in Supabase SQL Editor:
+    CREATE EXTENSION IF NOT EXISTS vector;
+    ALTER TABLE products ADD COLUMN embedding vector(768);
+    CREATE INDEX ON products USING ivfflat (embedding vector_cosine_ops)
+      WITH (lists = 100);
+    ANALYZE products;
+
+19.2  SIMILARITY SEARCH QUERY TEMPLATE
+  Search for similar products to a given query embedding ($1 = query vector):
+
+    SELECT
+      id, name, price, image_url, tags, store_id,
+      1 - (embedding <=> $1::vector) AS similarity_score
+    FROM products
+    WHERE
+      store_id = $2
+      AND is_active = true
+      AND (embedding <=> $1::vector) < 0.30  -- only results with >70% similarity
+    ORDER BY embedding <=> $1::vector ASC
+    LIMIT 10;
+
+  Interpretation:
+    cosine distance 0.0 = identical
+    cosine distance 0.3 = 70% similar (good match threshold)
+    cosine distance 1.0 = completely dissimilar
+
+19.3  INDEX PARAMETERS
+  Lists parameter: 100 (sqrt of estimated 10,000 products — good default)
+  Probes at query time: SET ivfflat.probes = 10; (balance speed vs accuracy)
+  For < 1,000 products: can use HNSW index instead for exact search with minimal overhead
+
+19.4  EMBEDDING DIMENSION REASONING
+  Gemini text-embedding-004 produces 768-dimension vectors.
+  768 floats × 4 bytes = 3,072 bytes per product embedding.
+  For 10,000 products: ~30MB for embedding column (fits Supabase 500MB free tier).
+  IVFFlat index adds ~10MB overhead.
+
+================================================================================
+SECTION 20: NOTIFICATION & ALERT SYSTEM
+================================================================================
+
+20.1  NOTIFICATION FLOW (COMPLETE)
+
+  Event Occurs (DB change or agent action)
+      │
+      ▼
+  FastAPI / LangChain Agent generates notification content
+      │
+      ▼
+  INSERT into notifications table (Supabase)
+      │
+      ├──► Supabase Realtime fires to client subscription "notifications:{user_id}"
+      │    └──► Frontend: toast notification + bell count increment
+      │
+      ├──► FastAPI BackgroundTask: send browser Push Notification
+      │    └──► Service Worker receives + shows OS-level notification
+      │
+      └──► For key events (order confirmed, delivered): FastAPI → Resend API
+           └──► HTML email sent to user's registered email
+
+20.2  EMAIL TEMPLATES (Resend)
+
+  Order Confirmation Email:
+    Subject: "Your Jalal Sons order #[ID] is confirmed!"
+    Content: Itemized list, total, estimated delivery time, track link
+
+  Delivery Confirmation Email:
+    Subject: "Order #[ID] delivered — leave a review!"
+    Content: Order summary, review star rating link, customer support link
+
+  Low Stock Alert Email (Admin):
+    Subject: "⚠ Inventory Alert: 3 items need restocking"
+    Content: Table of at-risk items with predicted stockout times
+
+20.3  BROWSER PUSH NOTIFICATION SETUP
+  Next.js PWA: next-pwa plugin generates Service Worker
+  Push subscription: navigator.serviceWorker.getRegistration() → subscription object
+  Subscription stored: In users table (future push_subscription JSONB column)
+  Push events used: ORDER_STATUS_CHANGE, RIDER_ASSIGNED, DELIVERED, SUBSTITUTION_OFFER
+
+================================================================================
+SECTION 21: DEPLOYMENT ARCHITECTURE (ALL FREE TIER)
+================================================================================
+
+21.1  BACKEND DEPLOYMENT — RAILWAY.APP (OR RENDER.COM)
+
+  Dockerfile setup:
+    Base image : python:3.11-slim
+    Install    : fastapi, uvicorn, langchain, tensorflow, supabase-py,
+                 apscheduler, openai (for Gemini via API), httpx, pydantic v2
+    CMD        : uvicorn main:app --host 0.0.0.0 --port 8000 --workers 2
+
+  Startup sequence:
+    1. Load environment variables
+    2. Download latest ML model from Supabase Storage to /tmp/model/
+    3. Load TensorFlow model into memory
+    4. Start APScheduler:
+         - Every 30 min: run inventory prediction scan
+         - Every 6 hours: run incremental ML retrain
+         - Every Sunday 02:00: full ML retrain
+         - Every day midnight: purge old rider_locations (>30 days)
+         - Every 1 min: expire soft cart reservations
+    5. Start Supabase Realtime listener (backend): listen for orders.status changes
+       to trigger Dispatcher Agent
+    6. FastAPI starts accepting connections
+
+  Railway free tier: $5/month credit (sufficient for prototype)
+  Alternative: Render.com free tier (512MB RAM — adequate for FastAPI + TF model)
+
+21.2  FRONTEND DEPLOYMENT — VERCEL (FREE TIER)
+
+  Framework    : Next.js 14 App Router
+  Build output : Static + Server Components (Edge functions for API routes if needed)
+  PWA          : next-pwa generates service worker for offline cache + push
+  CDN          : Vercel Edge Network (auto-global CDN)
+  Environment  : Configure all NEXT_PUBLIC_ env vars in Vercel dashboard
+
+  Performance targets:
+    First Contentful Paint < 1.5s
+    Largest Contentful Paint < 2.5s
+    Time to Interactive < 3.0s
+    Core Web Vitals: All green
+
+21.3  SUPABASE PROJECT SETUP
+
+  Single Supabase project (free tier):
+    - Region: Asia Pacific (Singapore — closest to Lahore)
+    - Database: 500MB (sufficient for ~10,000 products + 1 year orders)
+    - Auth: Enable Email/Password + Google OAuth
+    - Storage: Enable (create buckets: "product-images", "rider-avatars", "ml-models")
+    - Realtime: Enable on tables: orders, inventory, rider_locations, notifications,
+                substitution_offers, agent_logs, riders
+    - Extensions: Enable pgvector from Dashboard → Database → Extensions
+
+21.4  ENVIRONMENT SETUP CHECKLIST (IN ORDER)
+
+  1. Create Supabase project
+  2. Run all SQL migrations (17 tables + RLS policies + pgvector + indexes)
+  3. Seed admin_settings table with default values
+  4. Create Supabase Storage buckets
+  5. Register for Google AI Studio (Gemini API key)
+  6. Register for OpenRouteService (ORS_API_KEY)
+  7. Register for GraphHopper (GRAPHHOPPER_API_KEY)
+  8. Register for Resend (RESEND_API_KEY)
+  9. Create Apify account + configure scrapers + set webhooks
+  10. Deploy FastAPI backend to Railway (set all env vars)
+  11. Run initial Apify scraper → ingest products → generate embeddings
+  12. Train initial TensorFlow model on seed/simulated data
+  13. Deploy Next.js frontend to Vercel (set all env vars)
+  14. Test all 10 features end-to-end
+
+================================================================================
+SECTION 22: TESTING STRATEGY
+================================================================================
+
+22.1  BACKEND UNIT TESTS (pytest)
+  File structure:
+    tests/
+      test_auth.py         : Login, register, JWT validation
+      test_inventory.py    : Stock update, reserve, validate, prediction query
+      test_orders.py       : Create, checkout, status transitions, cancel
+      test_substitution.py : Deficit detection, offer generation, response handling
+      test_dispatcher.py   : Rider scoring formula, assignment, reassignment logic
+      test_search.py       : Semantic search with mock Gemini + mock pgvector
+      test_tracking.py     : ETA calculation, GPS WebSocket messages
+      test_ml.py           : TensorFlow prediction output shape + values range
+
+  Mocking strategy:
+    - Gemini API: httpx_mock for predictable embedding/completion responses
+    - Supabase: supabase-py client mocked with pytest fixtures
+    - TensorFlow model: saved minimal test model loaded in fixture
+
+22.2  INTEGRATION TESTS
+  Full checkout flow: create order → checkout → OOS trigger → substitution
+                      → accept → order confirmed
+  Dispatcher full loop: order READY_FOR_PICKUP → agent scores → assigns
+                        → rider rejects → re-assigns → rider accepts
+  Realtime subscription test: modify DB → verify channel payload received
+
+22.3  FRONTEND COMPONENT TESTS (Vitest + RTL)
+  Cart state management (Zustand store)
+  Status timeline rendering for all 8 states
+  Substitution modal: render, countdown, accept flow
+  Leaflet map: initialization, marker placement (jsdom limitations noted)
+
+22.4  LOAD TESTING (Locust)
+  Scenario 1: 100 concurrent checkout requests
+  Scenario 2: 50 simultaneous rider GPS WebSocket streams
+  Scenario 3: 200 concurrent product search requests (pgvector load)
+  Targets: p95 API response < 500ms, WebSocket latency < 100ms
+
+================================================================================
+SECTION 23: ENVIRONMENT VARIABLES REFERENCE
+================================================================================
+
+BACKEND (.env on Railway/Render):
+
+  SUPABASE_URL=https://xxxxx.supabase.co
+  SUPABASE_SERVICE_KEY=eyJ...           # Service role key (NEVER expose to client)
+  GEMINI_API_KEY=AIza...                # From Google AI Studio
+  ORS_API_KEY=eyJ...                   # From openrouteservice.org
+  GRAPHHOPPER_API_KEY=...              # From graphhopper.com
+  RESEND_API_KEY=re_...                # From resend.com
+  APIFY_API_TOKEN=apify_api_...        # For programmatic actor triggering
+  ENVIRONMENT=production               # 'development' disables rate limiting
+
+FRONTEND (.env.local / Vercel env vars):
+
+  NEXT_PUBLIC_SUPABASE_URL=https://xxxxx.supabase.co
+  NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJ...  # Public anon key (safe to expose)
+  NEXT_PUBLIC_API_URL=https://your-api.railway.app
+  NEXT_PUBLIC_ORS_API_KEY=eyJ...        # Used client-side for map route display
+  NEXT_PUBLIC_GRAPHHOPPER_API_KEY=...   # Used client-side for rider navigation
+
+================================================================================
+SECTION 24: SUPABASE REALTIME SETUP CHECKLIST
+================================================================================
+
+  1. Supabase Dashboard → Database → Replication
+  2. Enable Realtime for tables:
+       ✓ orders (all events: INSERT, UPDATE)
+       ✓ inventory (UPDATE only — when quantity changes)
+       ✓ rider_locations (INSERT only)
+       ✓ notifications (INSERT only)
+       ✓ substitution_offers (INSERT only)
+       ✓ agent_logs (INSERT only — for admin panel)
+       ✓ riders (UPDATE only — for admin map refresh)
+  3. In Next.js Supabase client: use .channel() with .on('postgres_changes', ...) API
+  4. Filter subscriptions on the client side:
+       orders: filter = `id=eq.{order_id}`
+       rider_locations: filter = `order_id=eq.{order_id}`
+       notifications: filter = `user_id=eq.{user_id}`
+  5. Test using Supabase Dashboard → Realtime Inspector (manual row insert tool)
+  6. Ensure Row Level Security does not block realtime for intended subscribers
+
+================================================================================
+SECTION 25: PGVECTOR INDEX CONFIGURATION (SQL COMMANDS)
+================================================================================
+
+-- Enable extension (in Supabase SQL Editor or via supabase CLI migration)
+CREATE EXTENSION IF NOT EXISTS vector;
+
+-- Add embedding column to products table
+ALTER TABLE products ADD COLUMN IF NOT EXISTS embedding vector(768);
+
+-- Create IVFFlat index for fast approximate nearest neighbor search
+-- (Run AFTER loading initial product embeddings — index builds on existing data)
+CREATE INDEX products_embedding_idx
+ON products
+USING ivfflat (embedding vector_cosine_ops)
+WITH (lists = 100);
+
+-- Analyze table after indexing for query planner optimization
+ANALYZE products;
+
+-- Set probe count for query-time accuracy/speed trade-off
+-- (Set in Supabase connection settings or per-query via FastAPI):
+-- SET ivfflat.probes = 10;
+
+-- Similarity search query (parameterized for FastAPI):
+-- $1 = query embedding vector (string representation)
+-- $2 = store_id UUID
+-- $3 = similarity threshold (from admin_settings, default 0.25)
+SELECT
+  p.id, p.name, p.price, p.image_url, p.tags, p.description,
+  1 - (p.embedding <=> $1::vector) AS similarity_score
+FROM products p
+INNER JOIN inventory i ON i.product_id = p.id
+WHERE
+  p.store_id = $2::uuid
+  AND p.is_active = true
+  AND i.quantity > 0
+  AND (p.embedding <=> $1::vector) < $3
+ORDER BY p.embedding <=> $1::vector ASC
+LIMIT 10;
+
+-- For HNSW index (better for smaller datasets < 1000 products):
+-- CREATE INDEX products_embedding_hnsw_idx
+-- ON products USING hnsw (embedding vector_cosine_ops)
+-- WITH (m = 16, ef_construction = 64);
+
+================================================================================
+SECTION 26: APIFY WEBHOOK CONFIGURATION (STEP-BY-STEP)
+================================================================================
+
+FOR RESTAURANT MENU SCRAPER:
+  1. Log in to apify.com
+  2. Go to Actors → search "restaurant-menu-scraper" by its_raghav → Save
+  3. Configure Input:
+       startUrls: [{"url": "https://restaurant-target-url.com"}]
+       maxItems: 500
+  4. Go to Actor → Webhooks → Add Webhook
+       Event type: RUN_SUCCEEDED
+       Webhook URL: https://your-api.railway.app/ingest/apify/restaurant
+       Payload template: {"body": {{outputBody}}}
+       Auth: Add X-Webhook-Secret header matching FastAPI env var APIFY_WEBHOOK_SECRET
+  5. Run Actor once manually to test
+  6. Set Schedule: Mondays 06:00 AM (Apify Schedules feature)
+
+FOR INSTACART GROCERY SCRAPER:
+  1. Search "instacart-scraper" by piotrv1001 → Save
+  2. Configure Input:
+       storeCode: "jalal-sons" (or nearest Instacart-supported store)
+       categories: ["vegetables", "fruits", "dairy", "beverages"]
+       maxResults: 200
+  3. Add Webhook:
+       Event type: RUN_SUCCEEDED
+       Webhook URL: https://your-api.railway.app/ingest/apify/grocery
+       Same auth header setup
+  4. Schedule: Fridays 06:00 AM
+
+FASTAPI WEBHOOK SECURITY:
+  Verify X-Webhook-Secret header on /ingest/* endpoints.
+  If secret doesn't match → return 401. Prevents unauthorized data injection.
+
+================================================================================
+SECTION 27: COMPLETE SOLUTION SUMMARY & ROADMAP
+================================================================================
+
+27.1  MVP SCOPE — Phase 1 (Weeks 1–4)
+
+  WEEK 1: Foundation
+    - Supabase project setup (all 17 tables, RLS policies, indexes, pgvector)
+    - FastAPI project structure (routers, middleware, auth verification)
+    - Next.js project setup (Tailwind, ShadCN, Zustand, Supabase client)
+    - Apify first run: ingest restaurant + grocery product data
+    - Basic product catalog API (list, detail, categories, stores)
+
+  WEEK 2: Core Commerce
+    - User authentication (Supabase Auth integration, role-based routing)
+    - Cart management (Zustand + Supabase sync + soft reservation logic)
+    - Basic checkout (order creation, inventory deduction)
+    - Order status pipeline (manual status updates, basic admin order list)
+
+  WEEK 3: Maps & Tracking
+    - Leaflet maps integration in Next.js (react-leaflet)
+    - Nominatim address autocomplete on checkout/profile
+    - OpenRouteService route calculation
+    - Basic rider GPS streaming (FastAPI WebSocket + Supabase insert)
+    - Live tracking page (Supabase Realtime + Leaflet rider marker)
+
+  WEEK 4: Basic Admin
+    - Admin dashboard (stats, order list)
+    - Inventory management table (inline edit)
+    - Rider management list + map
+    - Basic notifications system (in-app only, Supabase Realtime)
+
+27.2  CORE AI FEATURES — Phase 2 (Weeks 5–8)
+
+  WEEK 5: ML Inventory
+    - TensorFlow LSTM model training setup (on seed/simulated sales data)
+    - inventory_predictions table population via APScheduler
+    - Smart cart validation with stock warnings (API + frontend badges)
+    - Restock Alert Agent (LangChain) for admin notifications
+
+  WEEK 6: Substitution Engine
+    - Gemini embedding generation for all products (batch pipeline)
+    - pgvector IVFFlat index build
+    - Substitution Engine Agent (LangChain) full implementation
+    - Substitution modal on checkout (frontend) with Realtime trigger
+
+  WEEK 7: AI Dispatcher
+    - Dispatcher Agent (LangChain) full implementation
+    - OpenRouteService Distance Matrix for rider scoring
+    - Rider acceptance flow with 60-second countdown timer
+    - Re-assignment on rejection/timeout
+
+  WEEK 8: Real-Time & ETA
+    - Full Supabase Realtime channel setup (all 8 channels)
+    - Rolling ETA calculation (ORS distance + TF regression or historical avg)
+    - Personalized ETA message via Gemini
+    - Browser push notifications (Service Worker + next-pwa)
+
+27.3  ADVANCED FEATURES — Phase 3 (Weeks 9–12)
+
+  WEEK 9: Semantic Search
+    - Conversational search endpoint (Gemini intent extraction + pgvector)
+    - Voice search (Web Speech API integration in Next.js)
+    - Search results page with similarity scores and AI reason chips
+
+  WEEK 10: Admin Intelligence
+    - Predictive Inventory Analytics Dashboard (Recharts widgets)
+    - AI Dispatcher Oversight Panel (live agent feed + manual override controls)
+    - Dynamic Admin Settings Panel (all admin_settings key controls)
+
+  WEEK 11: Analytics & Reviews
+    - Full analytics dashboard (revenue, orders, riders, AI stats)
+    - Review system (order completion → rating modal → aggregated scores)
+    - TensorFlow model auto-retraining pipeline (weekly + incremental)
+    - Email notifications via Resend API (order confirmation, delivery receipt)
+
+  WEEK 12: Polish & Optimization
+    - Performance: pgvector index probe tuning, API response caching
+    - Mobile PWA: offline product browsing, install prompt
+    - Accessibility: ARIA labels, keyboard navigation, color contrast
+    - Security audit: RLS policy review, rate limit testing
+    - Load testing with Locust (100 concurrent users)
+    - Final bug fixes + documentation
+
+27.4  V2 ROADMAP (Post-MVP Features)
+
+  SHORT TERM (1-3 months after MVP):
+    - WhatsApp order notifications via WATI or Twilio WhatsApp API
+    - Barcode scanner for admin inventory management (phone camera)
+    - Multi-store inventory pooling (auto-transfer stock between branches)
+    - Loyalty points system (earn on orders, redeem at checkout)
+
+  MEDIUM TERM (3-6 months):
+    - Image-based product search (Gemini Vision API — "show me this product")
+    - Dynamic pricing: peak hour surge pricing for restaurant items
+    - Supplier portal: vendors can log in and update their own inventory
+    - A/B testing for substitution recommendations (track acceptance rates)
+    - International SMS notifications via Twilio (optional, paid)
+
+  LONG TERM (6+ months):
+    - AR product visualization (WebXR — point camera at shelf, see digital overlay)
+    - B2B wholesale order portal (bulk orders with tiered pricing)
+    - Franchise management: master admin controls multiple Jalal Sons branches
+    - Custom mobile app (React Native or Flutter) for rider and customer
+    - Advanced ML: reinforcement learning for dispatch optimization
+
+27.5  KEY TECHNICAL RISKS & MITIGATIONS
+
+  RISK: Nominatim rate limit (1 req/second)
+  MITIGATION: 300ms debounce on search input + 5-min client-side result cache
+              + custom User-Agent header (required by Nominatim ToS)
+
+  RISK: Supabase free tier DB size (500MB limit)
+  MITIGATION: Compress embeddings (float16 instead of float32 saves 50%),
+              nightly purge of rider_locations >30 days via APScheduler,
+              archive orders >6 months to a compressed JSONB archive table
+
+  RISK: GraphHopper 500 req/day limit
+  MITIGATION: Cache route results keyed by (start_rounded_3dec, end_lat_lng),
+              TTL 5 minutes. Most deliveries repeat similar origin-destination pairs.
+              For prototype: 500 req/day = ~20-25 active delivery sessions per day.
+
+  RISK: TensorFlow cold start on Railway (model load time ~10-15 seconds)
+  MITIGATION: Pre-load model at FastAPI startup (lifespan event), keep in memory.
+              Add /health endpoint that returns warm status. Railway keeps process
+              alive between requests for free tier.
+
+  RISK: LangChain agent latency (3-5 seconds for Gemini calls)
+  MITIGATION: Show "AI is thinking..." loading state on frontend.
+              Use Gemini Flash (fastest model) not Pro.
+              Cache dispatcher scoring for same order+rider pairs within 5 minutes.
+
+  RISK: Gemini API free quota (1M tokens/day)
+  MITIGATION: Batch embedding generation (100 items per API call).
+              Cache substitution reasoning per (original_product, candidate_product) pair.
+              Monitor token usage in Google AI Studio dashboard.
+
+  RISK: Race conditions during high-load checkout (multiple users buying last item)
+  MITIGATION: PostgreSQL row-level lock on inventory (SELECT FOR UPDATE SKIP LOCKED)
+              + soft reservation system with 15-minute hold window.
+              Atomically decrement quantity inside a transaction block in FastAPI.
+
+  RISK: Rider GPS accuracy on low-end phones
+  MITIGATION: Use enableHighAccuracy: true in watchPosition options.
+              Apply Kalman filter smoothing on received coordinates before storing.
+              Dead-reckoning for brief GPS drops (extrapolate from last heading + speed).
+
+================================================================================
+END OF DOCUMENT
+================================================================================
+Jalal Sons Smart Operations Platform
+Complete Professional Technical Specification Plan — Version 1.0
+--------------------------------------------------------------------------------
+Total Features : 10 Core Features
+Total Tables   : 17 Supabase Tables
+Total Endpoints: 50+ FastAPI Endpoints
+Total Channels : 8 Supabase Realtime Channels
+Tech Stack     : Python/FastAPI, LangChain, Gemini 2.5 Flash, TensorFlow,
+                 Supabase (only DB), Next.js 14, All Free APIs
+Free Services  : Gemini, Supabase, ORS, GraphHopper, Nominatim, Leaflet/OSM,
+                 Apify, Resend, Railway, Vercel (zero paid services at prototype stage)
+================================================================================
